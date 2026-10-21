@@ -14,7 +14,7 @@ Aucun mot de passe ni clé ne doit être envoyé par message : ils se saisissent
 ### 1. Base de données (Supabase, offre gratuite)
 
 1. Créer un compte sur [supabase.com](https://supabase.com) puis un projet (région la plus proche : Europe).
-2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**.
+2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**. Si la base a été créée avec une version précédente de ce fichier, exécuter aussi [`0002_correctif_security_definer.sql`](supabase/migrations/0002_correctif_security_definer.sql).
 3. Dans **Authentication → Users → Add user**, créer le premier compte administrateur (e-mail + mot de passe, cocher « Auto confirm »).
 4. Dans **SQL Editor**, donner le rôle administrateur à ce compte :
    ```sql

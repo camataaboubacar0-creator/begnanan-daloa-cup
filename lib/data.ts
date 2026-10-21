@@ -56,6 +56,6 @@ export const parId = <T extends { id: string }>(liste: T[]) => new Map(liste.map
 /** Places restantes par catégorie pour un match (ventes payées et en attente déduites). */
 export const getPlacesRestantes = (matchId: string) =>
   lire<{ categorie_id: string; restantes: number }[]>(
-    (db) => db.from("places_restantes").select("categorie_id, restantes").eq("match_id", matchId),
+    (db) => db.rpc("places_restantes", { p_match: matchId }),
     [],
   );

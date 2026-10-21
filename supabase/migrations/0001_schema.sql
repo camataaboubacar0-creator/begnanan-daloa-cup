@@ -158,7 +158,9 @@ create table abonnes_alertes (
 -- Classement calculé à partir des seuls résultats validés
 -- (barème provisoire 3/1/0, à confirmer par le comité)
 -- ---------------------------------------------------------------------------
-create view classement as
+-- security_invoker : la vue applique les droits de la personne qui la lit.
+create view classement
+with (security_invoker = true) as
 with r as (
   select poule, club_domicile as club, buts_domicile as bp, buts_exterieur as bc from matchs
     where statut = 'terminé' and resultat_valide and phase = 'Poules'
@@ -179,15 +181,20 @@ from clubs c left join r on r.club = c.id
 where c.poule is not null
 group by c.poule, c.id;
 
--- Places restantes par match et par catégorie (ventes payées uniquement)
-create view places_restantes
-with (security_invoker = false) as
-select m.id as match_id, cb.id as categorie_id,
-  cb.places_par_match - coalesce((
-    select sum(quantite) from commandes co
-    where co.match_id = m.id and co.categorie_id = cb.id and co.statut in ('payée', 'en attente')
-  ), 0)::int as restantes
-from matchs m cross join categories_billet cb;
+-- Places restantes d'un match par catégorie (ventes payées ou en attente déduites).
+-- Fonction plutôt que vue : elle lit les commandes, qui ne sont pas publiques,
+-- mais ne renvoie que des totaux.
+create or replace function places_restantes(p_match uuid)
+returns table (categorie_id uuid, restantes int)
+language sql stable security definer set search_path = public
+as $$
+  select cb.id,
+    (cb.places_par_match - coalesce((
+      select sum(co.quantite) from commandes co
+      where co.match_id = p_match and co.categorie_id = cb.id and co.statut in ('payée', 'en attente')
+    ), 0))::int
+  from categories_billet cb;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Sécurité par ligne
@@ -231,7 +238,7 @@ create policy "inscription aux alertes" on abonnes_alertes for insert with check
 create policy "abonnés lus par médias" on abonnes_alertes for select using (a_le_role('{medias}'));
 
 grant select on classement to anon, authenticated;
-grant select on places_restantes to anon, authenticated;
+grant execute on function places_restantes(uuid) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Contrôle à l'entrée : valide une entrée de façon atomique (pas de double passage)
