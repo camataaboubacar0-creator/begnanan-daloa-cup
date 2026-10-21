@@ -5,10 +5,20 @@ import { Crest } from "@/components/Crest";
 import { MatchCard } from "@/components/MatchCard";
 import { Hero3D } from "@/components/logo3d/Hero3D";
 import { getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
-import { dateCourte, heure, jourCourt } from "@/lib/format";
+import { dateCourte, dateLongue, heure, jourCourt } from "@/lib/format";
 import { CartePublication } from "./medias/CartePublication";
 
 export const revalidate = 30;
+
+// Accès directs vers chaque rubrique, pour qu'aucune ne soit cachée sur téléphone.
+const RUBRIQUES = [
+  ["/matchs", "Matchs", "Calendrier, scores en direct et résultats"],
+  ["/medias", "Médias", "Débriefs vidéo, annonces, hommes du match, photos"],
+  ["/classements", "Classements", "Les poules mises à jour après chaque match"],
+  ["/equipes", "Équipes", "Les clubs engagés et leurs fiches"],
+  ["/billetterie", "Billetterie", "Catégories, prix et réservation"],
+  ["/infos", "Infos pratiques", "Lieu, itinéraire, horaires et alertes WhatsApp"],
+] as const;
 
 export default async function Accueil() {
   const [tournoi, clubsListe, matchs, publications] = await Promise.all([getTournoi(), getClubs(), getMatchs(), getPublications()]);
@@ -16,6 +26,7 @@ export default async function Accueil() {
   const prochain = matchs.find((m) => m.statut === "programmé");
   const enDirect = matchs.filter((m) => m.statut === "en cours");
   const recents = matchs.filter((m) => m.statut === "terminé").slice(-3).reverse();
+  const carte = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${tournoi.lieu}, Côte d'Ivoire`)}`;
 
   return (
     <>
@@ -93,24 +104,76 @@ export default async function Accueil() {
         </section>
       )}
 
-      {publications.length > 0 && (
-        <section className="band alt">
-          <div className="wrap">
-            <div className="head">
-              <div>
-                <div className="eyebrow">Médias</div>
-                <h2>Dernières publications</h2>
-              </div>
-              <Link className="btn line sm" href="/medias">Tout voir</Link>
+      <section className="band">
+        <div className="wrap">
+          <div className="head">
+            <div>
+              <div className="eyebrow">Le tournoi</div>
+              <h2>Tout en un clic</h2>
             </div>
+          </div>
+          <div className="grid g3 rubriques-grille">
+            {RUBRIQUES.map(([href, titre, texte]) => (
+              <Link key={href} href={href} className="card rubrique">
+                <b>{titre}</b>
+                <span>{texte}</span>
+                <i aria-hidden="true">→</i>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="band alt">
+        <div className="wrap">
+          <div className="head">
+            <div>
+              <div className="eyebrow">Médias</div>
+              <h2>Les actus du tournoi</h2>
+            </div>
+            <Link className="btn line sm" href="/medias">Tout voir</Link>
+          </div>
+          {publications.length > 0 ? (
             <div className="grid g3">
               {publications.slice(0, 3).map((p) => (
                 <CartePublication key={p.id} pub={p} clubs={clubs} matchs={parId(matchs)} />
               ))}
             </div>
+          ) : (
+            <div className="card vide-medias">
+              <p>Les premiers débriefs, annonces et hommes du match seront publiés ici dès le début du tournoi.</p>
+              <Link className="btn line sm" href="/medias">Aller à l&apos;espace médias</Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="band">
+        <div className="wrap">
+          <div className="head">
+            <div>
+              <div className="eyebrow">Infos pratiques</div>
+              <h2>Venir au stade</h2>
+            </div>
           </div>
-        </section>
-      )}
+          <div className="card venir">
+            <dl className="info-list">
+              <div><dt>Lieu</dt><dd>{tournoi.lieu}</dd></div>
+              <div>
+                <dt>Dates</dt>
+                <dd>
+                  Du {dateLongue(tournoi.date_debut)} au {dateLongue(tournoi.date_fin)}{" "}
+                  {!tournoi.dates_confirmees && <span className="tbc">à confirmer</span>}
+                </dd>
+              </div>
+            </dl>
+            <div className="cta">
+              <a className="btn gold" href={carte} target="_blank" rel="noopener">Ouvrir l&apos;itinéraire</a>
+              <Link className="btn line" href="/infos">Toutes les infos</Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
