@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Apparitions } from "@/components/Apparitions";
 import { Header, TabBar } from "@/components/Navigation";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </footer>
         <TabBar />
         <Apparitions />
+        <SpeedInsights />
       </body>
     </html>
   );
