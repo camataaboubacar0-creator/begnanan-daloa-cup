@@ -1,14 +1,14 @@
 import { Formulaire } from "@/components/admin/Formulaire";
 import { exigerAcces } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { ROLES, type Role } from "@/lib/types";
+import { ROLES, ROLES_ORGANISATEURS, type Role } from "@/lib/types";
 import { creerCompte, modifierCompte } from "./actions";
 
 function ChoixRole({ valeur }: { valeur?: Role }) {
   return (
     <label className="field">Rôle
       <select name="role" defaultValue={valeur ?? "comite"}>
-        {Object.entries(ROLES).map(([k, r]) => <option key={k} value={k}>{r.label}</option>)}
+        {ROLES_ORGANISATEURS.map((k) => <option key={k} value={k}>{ROLES[k].label}</option>)}
       </select>
     </label>
   );
@@ -33,9 +33,10 @@ export default async function AdminComptes() {
         <h3 style={{ marginBottom: 6 }}>Rôles</h3>
         <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
           <li><b>Administrateur</b> : tout, y compris les comptes.</li>
-          <li><b>Comité</b> : paramètres du tournoi, clubs, matchs, scores et validation.</li>
+          <li><b>Comité</b> : paramètres du tournoi, clubs, matchs, scores et validation, inscriptions et licences.</li>
           <li><b>Billetterie</b> : prix, catégories, commandes, contrôle à l&apos;entrée.</li>
           <li><b>Médias</b> : débriefs, annonces, hommes du match, galerie.</li>
+          <li><b>Présidents de club</b> : leur compte est créé quand le comité accepte la demande d&apos;inscription du club (onglet « Inscriptions et licences »).</li>
         </ul>
       </div>
       <div className="card">

@@ -8,17 +8,22 @@ export interface Organisateur {
   email: string;
   nom: string;
   role: Role;
+  /** Club du président (rôle « president » uniquement). */
+  club_id?: string;
 }
 
-/** Organisateur connecté et actif, ou null. */
+/** Organisateur ou président de club connecté et actif, ou null. */
 export async function getOrganisateur(): Promise<Organisateur | null> {
   if (!supabaseConfigured) return null;
   const db = await createClient();
   const { data } = await db.auth.getUser();
   if (!data.user) return null;
+  const email = data.user.email ?? "";
   const { data: profil } = await db.from("profils").select("nom, role, actif").eq("user_id", data.user.id).maybeSingle();
-  if (!profil?.actif) return null;
-  return { id: data.user.id, email: data.user.email ?? "", nom: profil.nom, role: profil.role };
+  if (profil) return profil.actif ? { id: data.user.id, email, nom: profil.nom, role: profil.role } : null;
+  const { data: president } = await db.from("presidents").select("nom, club_id, actif").eq("user_id", data.user.id).maybeSingle();
+  if (!president?.actif) return null;
+  return { id: data.user.id, email, nom: president.nom, role: "president", club_id: president.club_id };
 }
 
 export const peutVoir = (role: Role, page: string) => ROLES[role].pages.includes(page);

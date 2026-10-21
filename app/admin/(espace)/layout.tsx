@@ -11,6 +11,8 @@ export const metadata: Metadata = { title: "Administration", robots: { index: fa
 const PAGES = [
   ["tournoi", "Tournoi"],
   ["matchs", "Clubs et matchs"],
+  ["licences", "Inscriptions et licences"],
+  ["club", "Mon club"],
   ["billets", "Billetterie"],
   ["medias", "Médias"],
   ["comptes", "Comptes"],
@@ -24,7 +26,7 @@ export default async function EspaceAdmin({ children }: { children: React.ReactN
       <section className="dash-head">
         <div className="wrap">
           <div>
-            <div className="eyebrow" style={{ color: "var(--gold)" }}>Espace organisateurs · {ROLES[orga.role].label}</div>
+            <div className="eyebrow" style={{ color: "var(--gold)" }}>{orga.role === "president" ? "Espace club" : "Espace organisateurs"} · {ROLES[orga.role].label}</div>
             <h2>Bonjour {orga.nom}</h2>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

@@ -3,6 +3,7 @@
 Site officiel du tournoi de maracana BÊGNANAN DALOA CUP (Daloa).
 
 - **Côté supporters** : accueil avec compte à rebours et résultats en direct, calendrier filtrable, classements par poule calculés automatiquement, fiches des clubs, médias (débriefs vidéo, annonces, hommes du match, galerie), billetterie, infos pratiques et inscription aux alertes WhatsApp.
+- **Côté présidents de club** : demande d'inscription du club (`/inscription-club`), puis, une fois acceptée par le comité, un espace pour inscrire les joueurs et demander leurs licences (10 incluses par club, les suivantes au tarif fixé par le comité). Chaque licence active a une carte avec un QR code de vérification.
 - **Côté organisateurs** (`/admin`) : connexion par e-mail et mot de passe, droits selon le rôle (administrateur, comité, billetterie, médias). Paramètres du tournoi, clubs, matchs et scores avec validation, catégories et prix des billets, contrôle des billets à l'entrée, publications et galerie, gestion des comptes.
 
 Technique : Next.js (React) hébergé sur Vercel, base de données et comptes sur Supabase. Les droits sont vérifiés par la base elle-même (sécurité par ligne), pas seulement par le site.
@@ -14,7 +15,7 @@ Aucun mot de passe ni clé ne doit être envoyé par message : ils se saisissent
 ### 1. Base de données (Supabase, offre gratuite)
 
 1. Créer un compte sur [supabase.com](https://supabase.com) puis un projet (région la plus proche : Europe).
-2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**. Si la base a été créée avec une version précédente de ce fichier, exécuter aussi [`0002_correctif_security_definer.sql`](supabase/migrations/0002_correctif_security_definer.sql).
+2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**. Si la base a été créée avec une version précédente de ce fichier, exécuter aussi [`0002_correctif_security_definer.sql`](supabase/migrations/0002_correctif_security_definer.sql). Exécuter ensuite [`0003_clubs_licences.sql`](supabase/migrations/0003_clubs_licences.sql) (inscription des clubs et licences).
 3. Dans **Authentication → Users → Add user**, créer le premier compte administrateur (e-mail + mot de passe, cocher « Auto confirm »).
 4. Dans **SQL Editor**, donner le rôle administrateur à ce compte :
    ```sql
@@ -58,7 +59,6 @@ Sans variables Supabase, le site s'affiche quand même avec des listes vides, ce
 
 - Paiement mobile money (Orange Money, MTN MoMo, Moov Money, Wave) via CinetPay et e-billet avec QR code : nécessite un compte marchand CinetPay au nom du comité.
 - Lecture du QR code à la caméra pour le contrôle à l'entrée.
-- Espace des présidents de club (joueurs, licences, suivi du dossier).
 - Envoi automatique des alertes WhatsApp (WhatsApp Business).
 - Envoi des photos directement depuis l'espace médias (aujourd'hui : lien vers l'image).
 

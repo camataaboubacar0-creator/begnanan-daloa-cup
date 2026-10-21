@@ -30,6 +30,8 @@ export async function ecrire(
     if (error.code === "23505") return { erreur: "Cet élément existe déjà." };
     if (error.code === "23514" || error.code === "22P02") return { erreur: "Valeur invalide, vérifiez le formulaire." };
     if (error.code === "42501") return { erreur: "Votre rôle ne permet pas cette modification." };
+    // Règles métier levées par la base (licences) : leur message est fait pour être lu.
+    if (error.code === "P0001") return { erreur: error.message };
     return { erreur: "Enregistrement impossible. Réessayez." };
   }
   revalidatePath("/", "layout");

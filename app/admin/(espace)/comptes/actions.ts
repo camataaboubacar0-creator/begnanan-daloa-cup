@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { coche, texte, type Etat } from "@/lib/admin";
 import { exigerAcces } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { ROLES, type Role } from "@/lib/types";
+import { ROLES_ORGANISATEURS, type RoleOrganisateur } from "@/lib/types";
 
-const roleValide = (r: string): r is Role => r in ROLES;
+// Les comptes de présidents se créent en acceptant la demande d'inscription du club.
+const roleValide = (r: string): r is RoleOrganisateur => (ROLES_ORGANISATEURS as readonly string[]).includes(r);
 
 /**
  * Crée le compte d'un organisateur avec un mot de passe provisoire,

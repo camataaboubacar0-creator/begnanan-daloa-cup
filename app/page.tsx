@@ -18,6 +18,8 @@ const RUBRIQUES = [
   ["/equipes", "Équipes", "Les clubs engagés et leurs fiches"],
   ["/billetterie", "Billetterie", "Catégories, prix et réservation"],
   ["/infos", "Infos pratiques", "Lieu, itinéraire, horaires et alertes WhatsApp"],
+  ["/inscription-club", "Présidents de club", "Inscrire son club, ses joueurs et leurs licences"],
+  ["/admin", "Espace pro", "Comité, présidents, billetterie et médias"],
 ] as const;
 
 export default async function Accueil() {
