@@ -19,7 +19,11 @@ create table profils (
 );
 
 -- Vrai si l'utilisateur connecté a l'un des rôles demandés (l'admin a tous les droits).
-create or replace function a_le_role(roles role_organisateur[])
+-- Rangée dans un schéma non exposé par l'API : elle ne sert qu'aux règles de sécurité.
+create schema if not exists prive;
+grant usage on schema prive to anon, authenticated;
+
+create or replace function prive.a_le_role(roles role_organisateur[])
 returns boolean
 language sql stable security definer set search_path = public
 as $$
@@ -210,32 +214,32 @@ alter table galerie enable row level security;
 alter table abonnes_alertes enable row level security;
 
 -- Profils : chacun lit le sien, l'admin gère tout
-create policy "profil lu par soi" on profils for select using (user_id = auth.uid() or a_le_role('{admin}'));
-create policy "profils gérés par admin" on profils for all using (a_le_role('{admin}')) with check (a_le_role('{admin}'));
+create policy "profil lu par soi" on profils for select using (user_id = auth.uid() or prive.a_le_role('{admin}'));
+create policy "profils gérés par admin" on profils for all using (prive.a_le_role('{admin}')) with check (prive.a_le_role('{admin}'));
 
 -- Lecture publique de ce qui est publiable
 create policy "tournoi public" on tournoi for select using (true);
 create policy "clubs publics" on clubs for select using (true);
 create policy "matchs publics" on matchs for select using (true);
-create policy "catégories en vente publiques" on categories_billet for select using (en_vente or a_le_role('{billetterie}'));
-create policy "publications publiées" on publications for select using (publiee or a_le_role('{medias}'));
-create policy "galerie publiée" on galerie for select using (publiee or a_le_role('{medias}'));
+create policy "catégories en vente publiques" on categories_billet for select using (en_vente or prive.a_le_role('{billetterie}'));
+create policy "publications publiées" on publications for select using (publiee or prive.a_le_role('{medias}'));
+create policy "galerie publiée" on galerie for select using (publiee or prive.a_le_role('{medias}'));
 
 -- Écritures selon le rôle
-create policy "tournoi modifié par comité" on tournoi for update using (a_le_role('{comite}')) with check (a_le_role('{comite}'));
-create policy "clubs gérés par comité" on clubs for all using (a_le_role('{comite}')) with check (a_le_role('{comite}'));
-create policy "matchs gérés par comité" on matchs for all using (a_le_role('{comite}')) with check (a_le_role('{comite}'));
-create policy "catégories gérées par billetterie" on categories_billet for all using (a_le_role('{billetterie}')) with check (a_le_role('{billetterie}'));
-create policy "publications gérées par médias" on publications for all using (a_le_role('{medias}')) with check (a_le_role('{medias}'));
-create policy "galerie gérée par médias" on galerie for all using (a_le_role('{medias}')) with check (a_le_role('{medias}'));
+create policy "tournoi modifié par comité" on tournoi for update using (prive.a_le_role('{comite}')) with check (prive.a_le_role('{comite}'));
+create policy "clubs gérés par comité" on clubs for all using (prive.a_le_role('{comite}')) with check (prive.a_le_role('{comite}'));
+create policy "matchs gérés par comité" on matchs for all using (prive.a_le_role('{comite}')) with check (prive.a_le_role('{comite}'));
+create policy "catégories gérées par billetterie" on categories_billet for all using (prive.a_le_role('{billetterie}')) with check (prive.a_le_role('{billetterie}'));
+create policy "publications gérées par médias" on publications for all using (prive.a_le_role('{medias}')) with check (prive.a_le_role('{medias}'));
+create policy "galerie gérée par médias" on galerie for all using (prive.a_le_role('{medias}')) with check (prive.a_le_role('{medias}'));
 
 -- Commandes : jamais lisibles par le public. Elles sont créées et confirmées
 -- uniquement par le serveur (clé de service), après retour du prestataire de paiement.
-create policy "commandes lues par billetterie" on commandes for select using (a_le_role('{billetterie}'));
+create policy "commandes lues par billetterie" on commandes for select using (prive.a_le_role('{billetterie}'));
 
 -- Alertes : n'importe qui peut s'inscrire, seuls les médias lisent la liste
 create policy "inscription aux alertes" on abonnes_alertes for insert with check (true);
-create policy "abonnés lus par médias" on abonnes_alertes for select using (a_le_role('{medias}'));
+create policy "abonnés lus par médias" on abonnes_alertes for select using (prive.a_le_role('{medias}'));
 
 grant select on classement to anon, authenticated;
 grant execute on function places_restantes(uuid) to anon, authenticated;
@@ -249,7 +253,7 @@ language plpgsql security definer set search_path = public
 as $$
 declare c commandes;
 begin
-  if not a_le_role('{billetterie}') then
+  if not prive.a_le_role('{billetterie}') then
     raise exception 'accès refusé';
   end if;
   select * into c from commandes where reference = upper(trim(ref)) for update;
@@ -265,3 +269,7 @@ begin
   return query select 'valide', (select nom from categories_billet where id = c.categorie_id), c.quantite, c.entrees_validees + 1, c.nom_acheteur;
 end;
 $$;
+
+-- Réservé aux organisateurs connectés.
+revoke execute on function valider_entree(text) from public, anon;
+grant execute on function valider_entree(text) to authenticated;
