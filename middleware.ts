@@ -30,6 +30,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// Seul l'espace /admin utilise les comptes : les pages publiques n'attendent pas Supabase.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|logo|.*\\.(?:webp|jpg|png|svg)$).*)"],
+  matcher: ["/admin/:path*"],
 };
