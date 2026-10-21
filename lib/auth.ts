@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { createClient, supabaseConfigured } from "./supabase/server";
 import { ROLES, type Role } from "./types";
 
@@ -12,8 +13,11 @@ export interface Organisateur {
   club_id?: string;
 }
 
-/** Organisateur ou président de club connecté et actif, ou null. */
-export async function getOrganisateur(): Promise<Organisateur | null> {
+/**
+ * Organisateur ou président de club connecté et actif, ou null.
+ * Mis en cache le temps d'une requête : la mise en page et la page ne refont pas la vérification.
+ */
+export const getOrganisateur = cache(async (): Promise<Organisateur | null> => {
   if (!supabaseConfigured) return null;
   const db = await createClient();
   const { data } = await db.auth.getUser();
@@ -24,7 +28,7 @@ export async function getOrganisateur(): Promise<Organisateur | null> {
   const { data: president } = await db.from("presidents").select("nom, club_id, actif").eq("user_id", data.user.id).maybeSingle();
   if (!president?.actif) return null;
   return { id: data.user.id, email, nom: president.nom, role: "president", club_id: president.club_id };
-}
+});
 
 export const peutVoir = (role: Role, page: string) => ROLES[role].pages.includes(page);
 
