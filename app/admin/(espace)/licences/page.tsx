@@ -3,20 +3,24 @@ import { exigerAcces } from "@/lib/auth";
 import { supplementLicences } from "@/lib/classement";
 import { dateCourte, fcfa, whatsAppNumero } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { Club, DemandeClub, Joueur } from "@/lib/types";
-import { accepterDemande, controlerLicence, refuserDemande, refuserLicence, reglerLicences } from "./actions";
+import { FONCTIONS, type Club, type DemandeClub, type Encadrant, type Joueur } from "@/lib/types";
+import { accepterDemande, controlerLicence, enregistrerPresident, refuserDemande, refuserLicence, reglerLicences, validerEncadrant } from "./actions";
 
 const age = (naissance: string) => Math.floor((Date.now() - new Date(naissance).getTime()) / (365.25 * 24 * 3600 * 1000));
 
 export default async function AdminLicences() {
   await exigerAcces("licences");
   const db = await createClient();
-  const [{ data: t }, { data: demandes }, { data: joueurs }, { data: clubs }] = await Promise.all([
+  const [{ data: t }, { data: demandes }, { data: joueurs }, { data: clubs }, { data: encadrants }] = await Promise.all([
     db.from("tournoi").select("licences_incluses, tarif_licence_fcfa").eq("id", 1).single(),
     db.from("demandes_club").select("*").eq("statut", "en attente").order("cree_le"),
     db.from("joueurs").select("*").in("etat", ["soumise", "active"]).order("soumise_le"),
     db.from("clubs").select("id, nom").order("nom"),
+    db.from("encadrants").select("*").order("cree_le"),
   ]);
+  const staff = (encadrants ?? []) as Encadrant[];
+  const staffAValider = staff.filter((e) => !e.valide);
+  const presidents = new Map(staff.filter((e) => e.fonction === "président").map((e) => [e.club_id, e]));
   const incluses = t?.licences_incluses ?? 10;
   const tarif = t?.tarif_licence_fcfa ?? null;
   const liste = (joueurs ?? []) as Joueur[];
@@ -100,6 +104,45 @@ export default async function AdminLicences() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: 6 }}>Encadrement des clubs</h3>
+        <p className="small" style={{ marginBottom: 12 }}>
+          Chaque club a trois cartes d&apos;encadrement : le président, le coach et l&apos;adjoint. Les présidents ajoutent leur coach et leur adjoint ;
+          vous validez leurs cartes ici. La carte du président est créée à l&apos;acceptation de la demande.
+        </p>
+        {!staffAValider.length && <p className="small" style={{ marginBottom: 12 }}>Aucune carte d&apos;encadrement à valider.</p>}
+        <div className="adm-list">
+          {staffAValider.map((e) => (
+            <div key={e.id} className="adm-item">
+              <b>{e.prenoms} {e.nom}</b> <span className="small">· {FONCTIONS[e.fonction]} · {nomClub.get(e.club_id)}{e.telephone ? ` · ${e.telephone}` : ""}</span>
+              <Formulaire action={validerEncadrant} className="form-row" bouton="Valider la carte">
+                <input type="hidden" name="id" value={e.id} />
+                <input type="hidden" name="valide" value="on" />
+              </Formulaire>
+            </div>
+          ))}
+        </div>
+        <details style={{ marginTop: 12 }}>
+          <summary className="small">Fiches des présidents ({presidents.size} / {nomClub.size} clubs)</summary>
+          <div className="adm-list" style={{ marginTop: 8 }}>
+            {[...nomClub].map(([id, nom]) => {
+              const p = presidents.get(id);
+              return (
+                <details key={id} className="adm-item">
+                  <summary><b>{nom}</b> <span className="small">· {p ? `${p.prenoms} ${p.nom}${p.numero_carte ? ` · ${p.numero_carte}` : ""}` : "pas de fiche"}</span></summary>
+                  <Formulaire action={enregistrerPresident}>
+                    <input type="hidden" name="club_id" value={id} />
+                    <label className="field">Nom<input name="nom" defaultValue={p?.nom} required maxLength={60} /></label>
+                    <label className="field">Prénoms<input name="prenoms" defaultValue={p?.prenoms} required maxLength={80} /></label>
+                    <label className="field">Téléphone<input name="telephone" type="tel" defaultValue={p?.telephone ?? ""} maxLength={20} /></label>
+                  </Formulaire>
+                </details>
+              );
+            })}
+          </div>
+        </details>
       </div>
 
       <div className="card">

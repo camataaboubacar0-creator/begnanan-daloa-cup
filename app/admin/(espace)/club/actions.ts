@@ -37,3 +37,25 @@ export async function supprimerJoueur(_: Etat, f: FormData): Promise<Etat> {
   await exigerAcces("club");
   return ecrire("club", (db) => db.from("joueurs").delete().eq("id", texte(f, "id")), "Joueur retiré.");
 }
+
+const FONCTIONS_CLUB = ["coach", "adjoint"];
+
+/** Coach et adjoint : ajoutés par le président, validés ensuite par le comité. */
+export async function enregistrerEncadrant(_: Etat, f: FormData): Promise<Etat> {
+  const { club_id } = await exigerAcces("club");
+  const fonction = texte(f, "fonction");
+  const fiche = { nom: texte(f, "nom").slice(0, 60), prenoms: texte(f, "prenoms").slice(0, 80), telephone: texteOuNull(f, "telephone") };
+  if (!FONCTIONS_CLUB.includes(fonction)) return { erreur: "Fonction invalide." };
+  if (!fiche.nom || !fiche.prenoms) return { erreur: "Nom et prénoms sont obligatoires." };
+  const id = texte(f, "id");
+  return ecrire(
+    "club",
+    (db) => (id ? db.from("encadrants").update(fiche).eq("id", id) : db.from("encadrants").insert({ ...fiche, fonction, club_id })),
+    "Enregistré : le comité doit maintenant valider la carte.",
+  );
+}
+
+export async function retirerEncadrant(_: Etat, f: FormData): Promise<Etat> {
+  await exigerAcces("club");
+  return ecrire("club", (db) => db.from("encadrants").delete().eq("id", texte(f, "id")), "Retiré.");
+}

@@ -11,8 +11,12 @@ export const metadata: Metadata = { title: "Administration", robots: { index: fa
 const PAGES = [
   ["tournoi", "Tournoi"],
   ["matchs", "Clubs et matchs"],
+  ["tirage", "Tirage et calendrier"],
+  ["annonces", "Annonces"],
   ["licences", "Inscriptions et licences"],
   ["club", "Mon club"],
+  ["mercato", "Mercato"],
+  ["cartes", "Cartes à imprimer"],
   ["billets", "Billetterie"],
   ["medias", "Médias"],
   ["comptes", "Comptes"],

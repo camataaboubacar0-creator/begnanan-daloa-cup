@@ -2,10 +2,10 @@
 
 import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { coche, ecrire, entier, texte, type Etat } from "@/lib/admin";
+import { coche, ecrire, entier, texte, texteOuNull, type Etat } from "@/lib/admin";
 import { exigerAcces } from "@/lib/auth";
 import { sigleDe } from "@/lib/format";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 // Mot de passe provisoire lisible (sans 0/O ni 1/l), à transmettre au président.
 function motDePasseProvisoire() {
@@ -43,6 +43,11 @@ export async function accepterDemande(_: Etat, f: FormData): Promise<Etat> {
     return { erreur: "Création du compte impossible." };
   }
   await admin.from("demandes_club").update({ statut: "acceptée", club_id: club.id, traitee_le: new Date().toISOString() }).eq("id", d.id);
+  // Fiche (et carte) du président, créée avec la session du comité : la base n'accepte une carte validée que de lui.
+  const [nom, ...prenoms] = d.president_nom.trim().split(/\s+/);
+  await (await createClient())
+    .from("encadrants")
+    .insert({ club_id: club.id, fonction: "président", nom, prenoms: prenoms.join(" ") || "—", telephone: d.telephone, valide: true });
   revalidatePath("/", "layout");
   return { ok: `Club créé. Identifiants à transmettre à ${d.president_nom} : ${d.email} / ${mdp}` };
 }
@@ -80,5 +85,21 @@ export async function refuserLicence(_: Etat, f: FormData): Promise<Etat> {
     "licences",
     (db) => db.from("joueurs").update({ etat: "refusée", validation_sportive: false, motif_refus: motif }).eq("id", texte(f, "id")),
     "Licence refusée.",
+  );
+}
+
+/** Valide (ou retire) la carte d'un membre de l'encadrement ; la base attribue le numéro. */
+export async function validerEncadrant(_: Etat, f: FormData): Promise<Etat> {
+  return ecrire("licences", (db) => db.from("encadrants").update({ valide: coche(f, "valide") }).eq("id", texte(f, "id")));
+}
+
+/** Fiche du président (clubs créés à la main, ou correction du nom). */
+export async function enregistrerPresident(_: Etat, f: FormData): Promise<Etat> {
+  const fiche = { nom: texte(f, "nom").slice(0, 60), prenoms: texte(f, "prenoms").slice(0, 80), telephone: texteOuNull(f, "telephone"), valide: true };
+  if (!fiche.nom || !fiche.prenoms) return { erreur: "Nom et prénoms sont obligatoires." };
+  return ecrire(
+    "licences",
+    (db) => db.from("encadrants").upsert({ ...fiche, club_id: texte(f, "club_id"), fonction: "président" }, { onConflict: "club_id,fonction" }),
+    "Fiche du président enregistrée, carte validée.",
   );
 }

@@ -1,11 +1,10 @@
-import { headers } from "next/headers";
+import Link from "next/link";
 import { Formulaire } from "@/components/admin/Formulaire";
-import { CarteLicence } from "@/components/licence/CarteLicence";
 import { exigerAcces } from "@/lib/auth";
 import { fcfa } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { EtatLicence, Joueur } from "@/lib/types";
-import { ajouterJoueur, modifierJoueur, supprimerJoueur } from "./actions";
+import { FONCTIONS, type Encadrant, type EtatLicence, type Joueur } from "@/lib/types";
+import { ajouterJoueur, enregistrerEncadrant, modifierJoueur, retirerEncadrant, supprimerJoueur } from "./actions";
 
 const ETATS: Record<EtatLicence, [string, string]> = {
   brouillon: ["Brouillon", "info"],
@@ -30,19 +29,22 @@ function ChampsJoueur({ j }: { j?: Joueur }) {
 export default async function MonClub() {
   const orga = await exigerAcces("club");
   const db = await createClient();
-  const [{ data: club }, { data: t }, { data: joueurs }] = await Promise.all([
+  const [{ data: club }, { data: t }, { data: joueurs }, { data: encadrants }] = await Promise.all([
     db.from("clubs").select("nom").eq("id", orga.club_id!).single(),
     db.from("tournoi").select("licences_incluses, tarif_licence_fcfa").eq("id", 1).single(),
     db.from("joueurs").select("*").order("nom"),
+    db.from("encadrants").select("*"),
   ]);
+  const staff = (encadrants ?? []) as Encadrant[];
+  const fiche = (f: Encadrant["fonction"]) => staff.find((e) => e.fonction === f);
+  const president = fiche("président");
   const liste = (joueurs ?? []) as Joueur[];
   const incluses = t?.licences_incluses ?? 10;
   const tarif = t?.tarif_licence_fcfa ?? null;
   const demandees = liste.filter((j) => j.etat === "soumise" || j.etat === "active");
   const payantes = demandees.filter((j) => j.payante);
   const actives = liste.filter((j) => j.etat === "active");
-  const h = await headers();
-  const base = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+  const cartes = actives.length + staff.filter((e) => e.valide).length;
 
   return (
     <>
@@ -106,15 +108,70 @@ export default async function MonClub() {
         </div>
       </div>
 
-      {actives.length > 0 && (
-        <div className="card">
-          <h3 style={{ marginBottom: 12 }}>Cartes de licence</h3>
-          <p className="small" style={{ marginBottom: 12 }}>À montrer à l&apos;entrée du terrain : le QR code permet au comité de vérifier la licence.</p>
-          <div className="grid g2">
-            {actives.map((j) => <CarteLicence key={j.id} joueur={j} club={club?.nom ?? ""} base={base} />)}
+      <div className="card">
+        <h3 style={{ marginBottom: 6 }}>Encadrement du club</h3>
+        <p className="small" style={{ marginBottom: 12 }}>
+          Le président, le coach et son adjoint reçoivent chacun une carte avec QR code, comme les joueurs.
+          Vous ajoutez le coach et l&apos;adjoint ; le comité valide leurs cartes. La fiche du président est tenue par le comité.
+        </p>
+        <div className="adm-list">
+          <div className="adm-item">
+            <b>{FONCTIONS.président}</b>{" "}
+            {president ? (
+              <>
+                <span className="small">· {president.prenoms} {president.nom}</span>{" "}
+                <span className={`pill ${president.valide ? "ok" : "warn"}`}>{president.valide ? "Carte validée" : "En attente du comité"}</span>
+              </>
+            ) : (
+              <span className="small">· fiche pas encore créée par le comité</span>
+            )}
           </div>
+          {(["coach", "adjoint"] as const).map((f) => {
+            const e = fiche(f);
+            return (
+              <details key={f} className="adm-item" open={!e}>
+                <summary>
+                  <b>{FONCTIONS[f]}</b>{" "}
+                  {e ? (
+                    <>
+                      <span className="small">· {e.prenoms} {e.nom}</span>{" "}
+                      <span className={`pill ${e.valide ? "ok" : "warn"}`}>{e.valide ? "Carte validée" : "En attente du comité"}</span>
+                    </>
+                  ) : (
+                    <span className="small">· à ajouter</span>
+                  )}
+                </summary>
+                {e?.valide ? (
+                  <p className="small">Carte validée : pour la modifier, contactez le comité.</p>
+                ) : (
+                  <>
+                    <Formulaire action={enregistrerEncadrant} bouton={e ? "Enregistrer" : `Ajouter le ${FONCTIONS[f].toLowerCase()}`}>
+                      <input type="hidden" name="fonction" value={f} />
+                      {e && <input type="hidden" name="id" value={e.id} />}
+                      <label className="field">Nom<input name="nom" defaultValue={e?.nom} required maxLength={60} /></label>
+                      <label className="field">Prénoms<input name="prenoms" defaultValue={e?.prenoms} required maxLength={80} /></label>
+                      <label className="field">Téléphone<input name="telephone" type="tel" defaultValue={e?.telephone ?? ""} maxLength={20} /></label>
+                    </Formulaire>
+                    {e && (
+                      <Formulaire action={retirerEncadrant} bouton="Retirer" className="form-row" confirmer={`Retirer ${e.prenoms} ${e.nom} ?`}>
+                        <input type="hidden" name="id" value={e.id} />
+                      </Formulaire>
+                    )}
+                  </>
+                )}
+              </details>
+            );
+          })}
         </div>
-      )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: 6 }}>Cartes à imprimer</h3>
+        <p className="small" style={{ marginBottom: 12 }}>
+          {cartes ? `${cartes} carte${cartes > 1 ? "s" : ""} validée${cartes > 1 ? "s" : ""} (encadrement et joueurs), à imprimer au format carte bancaire.` : "Les cartes apparaîtront dès que le comité aura validé l'encadrement ou des licences."}
+        </p>
+        <Link className="btn line sm" href="/admin/cartes">Voir et imprimer les cartes</Link>
+      </div>
     </>
   );
 }

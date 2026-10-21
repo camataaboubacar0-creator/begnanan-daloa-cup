@@ -16,11 +16,15 @@ export const dateCourte = (d: string) =>
 
 export const lienWhatsApp = (texte: string) => `https://wa.me/?text=${encodeURIComponent(texte)}`;
 
-/** Conversation WhatsApp avec un numéro ivoirien saisi librement (07 00 00 00 00 ou +225…). */
-export const whatsAppNumero = (telephone: string) => {
+/** Numéro au format international sans « + » (225…), à partir d'une saisie libre (07 00 00 00 00 ou +225…). */
+export const numeroInternational = (telephone: string) => {
   const chiffres = telephone.replace(/\D/g, "");
-  return `https://wa.me/${telephone.trim().startsWith("+") || chiffres.startsWith("225") ? chiffres : `225${chiffres}`}`;
+  return telephone.trim().startsWith("+") || chiffres.startsWith("225") ? chiffres : `225${chiffres}`;
 };
+
+/** Conversation WhatsApp avec un numéro saisi librement, avec un message prérempli éventuel. */
+export const whatsAppNumero = (telephone: string, texte?: string) =>
+  `https://wa.me/${numeroInternational(telephone)}${texte ? `?text=${encodeURIComponent(texte)}` : ""}`;
 
 /** Sigle de 2 à 4 lettres tiré du nom d'un club (« Étoiles de Lobia » → « EDL »). */
 export function sigleDe(nom: string) {

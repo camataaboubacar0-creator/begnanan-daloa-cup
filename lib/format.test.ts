@@ -16,3 +16,7 @@ test("lien WhatsApp avec l'indicatif ivoirien", () => {
   assert.equal(whatsAppNumero("07 00 00 00 00"), "https://wa.me/2250700000000");
   assert.equal(whatsAppNumero("+225 07 00 00 00 00"), "https://wa.me/2250700000000");
 });
+
+test("lien WhatsApp avec message prérempli", () => {
+  assert.equal(whatsAppNumero("0700000000", "Match reporté"), "https://wa.me/2250700000000?text=Match%20report%C3%A9");
+});

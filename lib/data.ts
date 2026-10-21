@@ -1,6 +1,6 @@
 import "server-only";
 import { createPublicClient, supabaseConfigured } from "./supabase/server";
-import type { CategorieBillet, Club, LigneClassement, Match, Photo, Publication, Tournoi } from "./types";
+import type { Alerte, CategorieBillet, Club, LigneClassement, Match, Photo, Publication, Tournoi } from "./types";
 
 const TOURNOI_PAR_DEFAUT: Tournoi = {
   nom: "BÊGNANAN DALOA CUP",
@@ -59,3 +59,7 @@ export const getPlacesRestantes = (matchId: string) =>
     (db) => db.rpc("places_restantes", { p_match: matchId }),
     [],
   );
+
+/** Dernières annonces du comité (incidents, reports, annulations…). */
+export const getAlertes = (nombre = 10) =>
+  lire<Alerte[]>((db) => db.from("alertes").select("*").order("publiee_le", { ascending: false }).limit(nombre), []);
