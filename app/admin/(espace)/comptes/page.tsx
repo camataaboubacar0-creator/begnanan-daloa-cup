@@ -1,5 +1,6 @@
 import { Formulaire } from "@/components/admin/Formulaire";
 import { exigerAcces } from "@/lib/auth";
+import { identifiantAffiche } from "@/lib/identifiant";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ROLES, ROLES_ORGANISATEURS, type Role } from "@/lib/types";
 import { creerCompte, modifierCompte } from "./actions";
@@ -22,7 +23,7 @@ export default async function AdminComptes() {
     const admin = createServiceClient();
     const [p, u] = await Promise.all([admin.from("profils").select("*").order("nom"), admin.auth.admin.listUsers({ perPage: 200 })]);
     profils = p.data ?? [];
-    emails = new Map((u.data?.users ?? []).map((x) => [x.id, x.email ?? ""]));
+    emails = new Map((u.data?.users ?? []).map((x) => [x.id, identifiantAffiche(x.email ?? "")]));
   } catch {
     return <div className="card"><p>La clé de service Supabase n&apos;est pas configurée : voir le guide d&apos;installation.</p></div>;
   }
@@ -36,14 +37,14 @@ export default async function AdminComptes() {
           <li><b>Comité</b> : paramètres du tournoi, clubs, matchs, scores et validation, inscriptions et licences.</li>
           <li><b>Billetterie</b> : prix, catégories, commandes, contrôle à l&apos;entrée.</li>
           <li><b>Médias</b> : débriefs, annonces, hommes du match, galerie.</li>
-          <li><b>Présidents de club</b> : leur compte est créé quand le comité accepte la demande d&apos;inscription du club (onglet « Inscriptions et licences »).</li>
+          <li><b>Présidents de club</b> : ils créent leur compte (identifiant et mot de passe) en déposant la demande d&apos;inscription du club ; il s&apos;ouvre quand le comité l&apos;accepte (onglet « Inscriptions et licences ») et donne accès à l&apos;espace club, pas à l&apos;espace pro.</li>
         </ul>
       </div>
       <div className="card">
         <h3 style={{ marginBottom: 12 }}>Créer un compte</h3>
         <Formulaire action={creerCompte} bouton="Créer le compte">
           <label className="field">Nom<input name="nom" required /></label>
-          <label className="field">E-mail<input name="email" type="email" required autoComplete="off" /></label>
+          <label className="field">E-mail ou nom d&apos;utilisateur<input name="email" required autoComplete="off" autoCapitalize="none" spellCheck={false} /></label>
           <ChoixRole />
           <label className="field">Mot de passe provisoire<input name="motdepasse" type="text" minLength={10} required autoComplete="off" /></label>
         </Formulaire>

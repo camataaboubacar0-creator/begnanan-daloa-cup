@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Rafraîchit la session Supabase et protège l'espace /admin.
+// Rafraîchit la session Supabase et protège l'espace pro (/admin) et l'espace club.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,16 +21,17 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  if (path.startsWith("/admin") && path !== "/admin/connexion" && !data.user) {
+  const espace = path.startsWith("/espace-club") ? "/espace-club" : "/admin";
+  if (path !== `${espace}/connexion` && !data.user) {
     const login = request.nextUrl.clone();
-    login.pathname = "/admin/connexion";
+    login.pathname = `${espace}/connexion`;
     login.searchParams.set("suite", path);
     return NextResponse.redirect(login);
   }
   return response;
 }
 
-// Seul l'espace /admin utilise les comptes : les pages publiques n'attendent pas Supabase.
+// Seuls les deux espaces utilisent les comptes : les pages publiques n'attendent pas Supabase.
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/espace-club/:path*"],
 };

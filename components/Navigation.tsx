@@ -27,7 +27,8 @@ function basculerTheme() {
 
 export function Header() {
   const path = usePathname();
-  const admin = path.startsWith("/admin");
+  // Espace pro et espace club : en-tête réduit, sans la navigation du site.
+  const admin = path.startsWith("/admin") || path.startsWith("/espace-club");
   return (
     <header className="top">
       <div className="wrap">
@@ -80,6 +81,7 @@ function Rubriques({ path }: { path: string }) {
             {label}
           </Link>
         ))}
+        <Link href="/espace-club">Espace club</Link>
         <Link href="/admin">🔒 Espace pro</Link>
       </div>
     </nav>
@@ -121,7 +123,7 @@ const ONGLETS = [
 
 export function TabBar() {
   const path = usePathname();
-  if (path.startsWith("/admin")) return null;
+  if (path.startsWith("/admin") || path.startsWith("/espace-club")) return null;
   return (
     <nav className="tabbar" aria-label="Navigation">
       {ONGLETS.map(([href, label]) => (

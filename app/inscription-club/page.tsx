@@ -17,20 +17,20 @@ export default async function InscriptionClub() {
             <div className="eyebrow">Présidents de club</div>
             <h1 className="h2">Inscrire mon club</h1>
           </div>
-          <Link className="btn line sm" href="/admin/connexion">Déjà inscrit ? Se connecter</Link>
+          <Link className="btn line sm" href="/espace-club/connexion">Déjà inscrit ? Se connecter</Link>
         </div>
-        <div className="grid g2" style={{ alignItems: "start" }}>
+        <div className="grid inscription-grille">
           <div className="card">
             <FormulaireDemande />
           </div>
           <div className="card">
             <h3 style={{ marginBottom: 10 }}>Comment ça marche</h3>
             <ol className="etapes">
-              <li><b>Vous envoyez la demande</b> avec ce formulaire.</li>
-              <li><b>Le comité l&apos;examine</b> et vous contacte sur WhatsApp.</li>
-              <li><b>Vous recevez vos identifiants</b> pour l&apos;espace de votre club.</li>
-              <li><b>Vous inscrivez vos joueurs</b> et demandez leurs licences.</li>
-              <li><b>Le comité valide chaque licence</b>. Un joueur doit avoir une licence active pour jouer.</li>
+              <li><b>Vous remplissez ce formulaire</b> : le club et son logo, le président, le coach et l&apos;adjoint, les joueurs avec leurs photos. Vous choisissez aussi votre identifiant et votre mot de passe.</li>
+              <li><b>Le comité examine la demande</b> et vous contacte sur WhatsApp.</li>
+              <li><b>Dès qu&apos;il l&apos;accepte</b>, vous vous connectez à l&apos;espace club avec votre identifiant : vous y gérez vos joueurs, votre encadrement et le profil du club.</li>
+              <li><b>Depuis l&apos;espace de votre club</b>, vous complétez le profil, ajoutez ou retirez des joueurs, demandez leurs licences, écrivez au comité et participez au mercato.</li>
+              <li><b>Le comité valide chaque licence et chaque carte</b>. Un joueur doit avoir une licence active pour jouer.</li>
             </ol>
             <h3 style={{ margin: "18px 0 6px" }}>Licences</h3>
             <p className="small">

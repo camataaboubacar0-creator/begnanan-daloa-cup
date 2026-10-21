@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { exigerAcces, peutVoir } from "@/lib/auth";
 import { ROLES } from "@/lib/types";
@@ -14,9 +15,9 @@ const PAGES = [
   ["tirage", "Tirage et calendrier"],
   ["annonces", "Annonces"],
   ["licences", "Inscriptions et licences"],
-  ["club", "Mon club"],
   ["mercato", "Mercato"],
   ["cartes", "Cartes à imprimer"],
+  ["messages", "Messages"],
   ["billets", "Billetterie"],
   ["medias", "Médias"],
   ["comptes", "Comptes"],
@@ -24,13 +25,15 @@ const PAGES = [
 
 export default async function EspaceAdmin({ children }: { children: React.ReactNode }) {
   const orga = await exigerAcces();
+  // L'espace pro est réservé à l'organisation : les présidents ont l'espace club.
+  if (orga.role === "president") redirect("/espace-club");
   const onglets = [["", "Tableau de bord"] as const, ...PAGES.filter(([p]) => peutVoir(orga.role, p))];
   return (
     <>
       <section className="dash-head">
         <div className="wrap">
           <div>
-            <div className="eyebrow" style={{ color: "var(--gold)" }}>{orga.role === "president" ? "Espace club" : "Espace organisateurs"} · {ROLES[orga.role].label}</div>
+            <div className="eyebrow" style={{ color: "var(--gold)" }}>Espace organisateurs · {ROLES[orga.role].label}</div>
             <h2>Bonjour {orga.nom}</h2>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

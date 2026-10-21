@@ -5,14 +5,14 @@ import { createPublicClient, supabaseConfigured } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Vérification de licence", robots: { index: false } };
 
-type Licence = { numero: string; nom: string; prenoms: string; club: string; poste: string | null; active: boolean };
+type Licence = { numero: string; nom: string; prenoms: string; club: string; poste: string | null; active: boolean; photo_url: string | null; logo_url: string | null };
 
 /** Page ouverte en scannant le QR code d'une carte de licence. */
 export default async function VerifierLicence({ params }: { params: Promise<{ numero: string }> }) {
   const { numero } = await params;
   let licence: Licence | null = null;
   if (supabaseConfigured) {
-    const { data } = await createPublicClient().rpc("verifier_licence", { p_numero: decodeURIComponent(numero) });
+    const { data } = await createPublicClient().rpc("verifier_carte", { p_numero: decodeURIComponent(numero) });
     licence = (data as Licence[] | null)?.[0] ?? null;
   }
   // Cartes de l'encadrement (président, coach, adjoint) : numéros en BDC-AA-E…
@@ -27,8 +27,10 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
               <div className={`etat ${licence.active ? "ok" : "bad"}`}>
                 {encadrement ? (licence.active ? "Carte valide" : "Carte non valide") : licence.active ? "Licence active" : "Licence non active"}
               </div>
+              {/* La photo permet de contrôler l'identité au stade. */}
+              {licence.photo_url && <img className="verif-photo" src={licence.photo_url} alt={`${licence.prenoms} ${licence.nom}`} />}
               <h2 style={{ fontSize: "1.6rem" }}>{licence.prenoms} {licence.nom}</h2>
-              <p>{licence.club}{licence.poste ? ` · ${licence.poste}` : ""}</p>
+              <p className="lic-club">{licence.logo_url && <img src={licence.logo_url} alt="" />}{licence.club}{licence.poste ? ` · ${licence.poste}` : ""}</p>
               <p className="small mono">{licence.numero}</p>
               {!licence.active && (
                 <p className="small">

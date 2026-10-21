@@ -11,8 +11,8 @@ const ORDRE = { président: 0, coach: 1, adjoint: 2 };
 export default async function Cartes({ searchParams }: { searchParams: Promise<{ club?: string }> }) {
   const orga = await exigerAcces("cartes");
   const db = await createClient();
-  const { data: clubs } = await db.from("clubs").select("id, nom").order("nom");
-  const liste = (clubs ?? []) as Pick<Club, "id" | "nom">[];
+  const { data: clubs } = await db.from("clubs").select("id, nom, logo_url").order("nom");
+  const liste = (clubs ?? []) as Pick<Club, "id" | "nom" | "logo_url">[];
   const demande = (await searchParams).club;
   const clubId = orga.role === "president" ? orga.club_id! : (liste.find((c) => c.id === demande) ?? liste[0])?.id;
   const club = liste.find((c) => c.id === clubId);
@@ -55,9 +55,9 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
       )}
       <div className="cartes-print">
         {staff.length > 0 && <h3>Encadrement</h3>}
-        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} base={base} />)}
+        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} logo={club!.logo_url} base={base} />)}
         {js.length > 0 && <h3>Joueurs</h3>}
-        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} base={base} />)}
+        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} logo={club!.logo_url} base={base} />)}
       </div>
     </div>
   );

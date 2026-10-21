@@ -8,7 +8,7 @@ export function Formulaire({ suite }: { suite: string }) {
   return (
     <form action={action} style={{ display: "grid", gap: 12 }}>
       <input type="hidden" name="suite" value={suite} />
-      <label className="field">E-mail<input name="email" type="email" required autoComplete="username" /></label>
+      <label className="field">E-mail ou nom d&apos;utilisateur<input name="email" required autoComplete="username" autoCapitalize="none" spellCheck={false} /></label>
       <label className="field">Mot de passe<input name="motdepasse" type="password" required autoComplete="current-password" /></label>
       {etat.erreur && <p className="form-err">{etat.erreur}</p>}
       <button className="btn primary" disabled={envoi}>{envoi ? "Connexion…" : "Se connecter"}</button>
