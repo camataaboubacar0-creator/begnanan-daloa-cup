@@ -89,11 +89,11 @@ export interface LigneClassement {
 }
 
 export const ROLES: Record<Role, { label: string; pages: string[] }> = {
-  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes", "billets", "medias", "comptes"] },
-  comite: { label: "Comité", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes"] },
+  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes"] },
+  comite: { label: "Comité", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes", "messages"] },
   billetterie: { label: "Billetterie", pages: ["billets"] },
   medias: { label: "Médias", pages: ["medias"] },
-  president: { label: "Président de club", pages: ["club", "mercato", "cartes"] },
+  president: { label: "Président de club", pages: ["club", "mercato", "cartes", "messages"] },
 };
 
 export const ROLES_ORGANISATEURS = ["admin", "comite", "billetterie", "medias"] as const satisfies readonly RoleOrganisateur[];
@@ -117,6 +117,7 @@ export interface Joueur {
   numero_licence: string | null;
   soumise_le: string | null;
   transfere?: boolean;
+  photo_url?: string | null;
 }
 
 export interface DemandeClub {
@@ -130,6 +131,37 @@ export interface DemandeClub {
   statut: "en attente" | "acceptée" | "refusée";
   club_id: string | null;
   cree_le: string;
+  user_id?: string | null;
+  identifiant?: string | null;
+  president_prenoms?: string | null;
+  logo_url?: string | null;
+  president_photo_url?: string | null;
+  encadrement?: { fonction: "coach" | "adjoint"; nom: string; prenoms: string; telephone: string | null; photo_url: string | null }[];
+  joueurs?: { nom: string; prenoms: string; date_naissance: string; poste: string | null; numero_maillot: number | null; photo_url: string | null }[];
+}
+
+export interface MessageClub {
+  id: string;
+  club_id: string;
+  de_comite: boolean;
+  auteur_nom: string | null;
+  texte: string;
+  lu: boolean;
+  cree_le: string;
+}
+
+export interface ModificationClub {
+  id: string;
+  club_id: string;
+  objet: "profil" | "joueur" | "encadrant";
+  action: "modifier" | "retirer";
+  cible: string | null;
+  donnees: Record<string, string | number | null>;
+  libelle: string | null;
+  statut: "en attente" | "acceptée" | "refusée" | "annulée";
+  motif: string | null;
+  cree_le: string;
+  traitee_le: string | null;
 }
 
 export type Fonction = "président" | "coach" | "adjoint";
@@ -144,6 +176,7 @@ export interface Encadrant {
   telephone: string | null;
   valide: boolean;
   numero_carte: string | null;
+  photo_url?: string | null;
 }
 
 export type StatutTransfert = "demandé" | "accepté par le club" | "validé" | "refusé";

@@ -32,6 +32,14 @@ export const getOrganisateur = cache(async (): Promise<Organisateur | null> => {
 
 export const peutVoir = (role: Role, page: string) => ROLES[role].pages.includes(page);
 
+/** Espace club : réservé aux présidents de club ; les organisateurs vont à l'espace pro. */
+export async function exigerClub() {
+  const orga = await getOrganisateur();
+  if (!orga) redirect("/espace-club/connexion");
+  if (orga.role !== "president" || !orga.club_id) redirect("/admin");
+  return orga as Organisateur & { club_id: string };
+}
+
 /** À appeler en tête de chaque page et action d'administration. */
 export async function exigerAcces(page?: string) {
   const orga = await getOrganisateur();

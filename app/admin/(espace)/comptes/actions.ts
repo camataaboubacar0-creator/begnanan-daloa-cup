@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { coche, texte, type Etat } from "@/lib/admin";
 import { exigerAcces } from "@/lib/auth";
+import { emailDepuisIdentifiant } from "@/lib/identifiant";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ROLES_ORGANISATEURS, type RoleOrganisateur } from "@/lib/types";
 
@@ -15,16 +16,18 @@ const roleValide = (r: string): r is RoleOrganisateur => (ROLES_ORGANISATEURS as
  */
 export async function creerCompte(_: Etat, f: FormData): Promise<Etat> {
   await exigerAcces("comptes");
-  const email = texte(f, "email").toLowerCase();
   const nom = texte(f, "nom");
   const role = texte(f, "role");
   const mdp = texte(f, "motdepasse");
-  if (!email || !nom || !roleValide(role)) return { erreur: "E-mail, nom et rôle sont obligatoires." };
+  if (!texte(f, "email") || !nom || !roleValide(role)) return { erreur: "Identifiant, nom et rôle sont obligatoires." };
+  const id = emailDepuisIdentifiant(texte(f, "email"));
+  if ("erreur" in id) return { erreur: id.erreur };
+  const { email } = id;
   if (mdp.length < 10) return { erreur: "Mot de passe provisoire : 10 caractères minimum." };
 
   const admin = createServiceClient();
   const { data, error } = await admin.auth.admin.createUser({ email, password: mdp, email_confirm: true });
-  if (error || !data.user) return { erreur: error?.message.includes("already") ? "Un compte existe déjà avec cet e-mail." : "Création impossible." };
+  if (error || !data.user) return { erreur: error?.message.includes("already") ? "Cet identifiant est déjà utilisé." : "Création impossible." };
   const { error: e2 } = await admin.from("profils").insert({ user_id: data.user.id, nom, role });
   if (e2) {
     await admin.auth.admin.deleteUser(data.user.id);

@@ -20,32 +20,6 @@ function MotDePasse() {
 export default async function TableauDeBord() {
   const orga = await exigerAcces();
   const db = await createClient();
-  if (orga.role === "president") {
-    const [{ data }, { count: recues }] = await Promise.all([
-      db.from("joueurs").select("etat"),
-      db.from("transferts").select("id", { count: "exact", head: true }).eq("club_depart", orga.club_id!).eq("statut", "demandé"),
-    ]);
-    const n = (e: string) => (data ?? []).filter((j) => j.etat === e).length;
-    return (
-      <>
-        <div className="grid g4">
-          {([["Licences actives", n("active")], ["En attente du comité", n("soumise")], ["Brouillons", n("brouillon")], ["À corriger", n("refusée")]] as const).map(([k, v]) => (
-            <div key={k} className="card">
-              <div className="kpi"><span className="k">{k}</span><span className="v num">{v}</span></div>
-              <Link className="small" href="/admin/club">Ouvrir</Link>
-            </div>
-          ))}
-          {(recues ?? 0) > 0 && (
-            <div className="card">
-              <div className="kpi"><span className="k">Demandes de transfert reçues</span><span className="v num">{recues}</span></div>
-              <Link className="small" href="/admin/mercato">Ouvrir</Link>
-            </div>
-          )}
-        </div>
-        <MotDePasse />
-      </>
-    );
-  }
   const [clubs, matchs, commandes] = await Promise.all([
     db.from("clubs").select("id", { count: "exact", head: true }),
     db.from("matchs").select("statut, resultat_valide"),
@@ -61,17 +35,21 @@ export default async function TableauDeBord() {
     ["Résultats à valider", aValider, peutVoir(orga.role, "matchs") ? "/admin/matchs" : undefined],
   ];
   if (peutVoir(orga.role, "licences")) {
-    const [demandes, licences, encadrement, transferts] = await Promise.all([
+    const [demandes, licences, encadrement, transferts, modifications, messages] = await Promise.all([
       db.from("demandes_club").select("id", { count: "exact", head: true }).eq("statut", "en attente"),
       db.from("joueurs").select("id", { count: "exact", head: true }).eq("etat", "soumise"),
       db.from("encadrants").select("id", { count: "exact", head: true }).eq("valide", false),
       db.from("transferts").select("id", { count: "exact", head: true }).in("statut", ["demandé", "accepté par le club"]),
+      db.from("modifications_club").select("id", { count: "exact", head: true }).eq("statut", "en attente"),
+      db.from("messages_club").select("id", { count: "exact", head: true }).eq("de_comite", false).eq("lu", false),
     ]);
     kpis.push(
       ["Demandes d'inscription", demandes.count ?? 0, "/admin/licences"],
       ["Licences à contrôler", licences.count ?? 0, "/admin/licences"],
       ["Cartes d'encadrement à valider", encadrement.count ?? 0, "/admin/licences"],
       ["Transferts en cours", transferts.count ?? 0, "/admin/mercato"],
+      ["Modifications demandées par les clubs", modifications.count ?? 0, "/admin/licences"],
+      ["Messages des clubs non lus", messages.count ?? 0, "/admin/messages"],
     );
   }
   if (peutVoir(orga.role, "billets")) {
