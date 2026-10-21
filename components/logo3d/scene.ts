@@ -153,8 +153,10 @@ function terrain() {
 /** Logo officiel en relief, qui suit la souris, au-dessus d'un terrain de football et au milieu de particules vertes et jaunes. */
 export function creerLogo3D({ canvas, zone, emplacement, image, animations, pret }: Options) {
   const petitEcran = zone.clientWidth < 700;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-  const dpr = Math.min(window.devicePixelRatio, petitEcran ? 1.5 : 2);
+  // Sur téléphone, le bandeau est très haut : on dessine en résolution normale et à 30 images/s
+  // pour laisser le défilement fluide, même sur les appareils modestes.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !petitEcran, alpha: true, powerPreference: "high-performance" });
+  const dpr = petitEcran ? 1 : Math.min(window.devicePixelRatio, 2);
   renderer.setPixelRatio(dpr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -171,7 +173,7 @@ export function creerLogo3D({ canvas, zone, emplacement, image, animations, pret
   pivot.add(logo);
   scene.add(pivot);
 
-  const nuage = particules(petitEcran ? 220 : 420);
+  const nuage = particules(petitEcran ? 140 : 420);
   scene.add(nuage);
   const matNuage = nuage.material as THREE.ShaderMaterial;
   matNuage.uniforms.pixel.value = dpr;
@@ -266,9 +268,13 @@ export function creerLogo3D({ canvas, zone, emplacement, image, animations, pret
     renderer.render(scene, camera);
   }
 
-  function boucle(instant?: number) {
+  const intervalle = petitEcran ? 1000 / 30 - 2 : 0;
+  let derniere = 0;
+  function boucle(instant = performance.now()) {
     id = requestAnimationFrame(boucle);
-    if (visible) image_(instant);
+    if (!visible || instant - derniere < intervalle) return;
+    derniere = instant;
+    image_(instant);
   }
 
   const observateur = new ResizeObserver(() => {

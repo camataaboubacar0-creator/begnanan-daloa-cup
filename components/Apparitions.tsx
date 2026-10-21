@@ -6,6 +6,16 @@ import { useEffect } from "react";
 // Blocs qui apparaissent en glissant vers le haut quand on les atteint en faisant défiler la page.
 // Les grilles sont animées carte par carte ; le reste, bloc par bloc.
 const CIBLES = "main section:not(.hero) .wrap > :not(.grid):not(:has(.grid)), main .grid > *";
+// Navigateurs sans :has() (anciens navigateurs intégrés) : seules les cartes des grilles sont animées.
+const CIBLES_SIMPLES = "main .grid > *";
+
+function cibles() {
+  try {
+    return document.querySelectorAll<HTMLElement>(CIBLES);
+  } catch {
+    return document.querySelectorAll<HTMLElement>(CIBLES_SIMPLES);
+  }
+}
 
 export function Apparitions() {
   const chemin = usePathname();
@@ -25,7 +35,7 @@ export function Apparitions() {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
-    const elements = Array.from(document.querySelectorAll<HTMLElement>(CIBLES)).filter((el) => !el.dataset.rv);
+    const elements = Array.from(cibles()).filter((el) => !el.dataset.rv);
     // (data-rv vide : pas encore vu ; « vu » ou « fini » : déjà apparu, on n'y touche plus.)
     for (const el of elements) {
       // Décalage en cascade entre voisins d'une même grille.
