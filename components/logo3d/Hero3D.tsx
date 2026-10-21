@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
+// Téléphones modestes et navigateurs intégrés aux applis (lien ouvert depuis WhatsApp, Facebook…) :
+// on garde le logo et le terrain dessiné en CSS, sans 3D.
+function appareilModeste() {
+  const n = navigator as Navigator & { deviceMemory?: number };
+  const integre = /; wv\)|FBAN|FBAV|Instagram|WhatsApp/i.test(navigator.userAgent);
+  return integre || (n.deviceMemory !== undefined && n.deviceMemory <= 3) || (navigator.hardwareConcurrency || 8) <= 4;
+}
+
 function webglDisponible() {
   try {
     const c = document.createElement("canvas");
@@ -41,7 +49,7 @@ export function Hero3D({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const z = zone.current, c = canvas.current;
     const emplacement = z?.querySelector<HTMLElement>("[data-logo-3d]");
-    if (!z || !c || !emplacement || !webglDisponible()) return;
+    if (!z || !c || !emplacement || appareilModeste() || !webglDisponible()) return;
     const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let annule = false;
     let nettoyer = () => {};

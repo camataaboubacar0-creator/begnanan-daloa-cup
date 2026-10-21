@@ -2,15 +2,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const LIENS = [
   ["/", "Accueil"],
-  ["/billetterie", "Billetterie"],
   ["/matchs", "Matchs"],
+  ["/medias", "Médias"],
   ["/classements", "Classements"],
   ["/equipes", "Équipes"],
-  ["/medias", "Médias"],
+  ["/billetterie", "Billetterie"],
   ["/infos", "Infos"],
 ] as const;
 
@@ -61,7 +61,28 @@ export function Header() {
           </svg>
         </button>
       </div>
+      {!admin && <Rubriques path={path} />}
     </header>
+  );
+}
+
+// Sur téléphone : toutes les rubriques sur une ligne qu'on fait glisser, sous l'en-tête.
+function Rubriques({ path }: { path: string }) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLElement>("a.on")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [path]);
+  return (
+    <nav className="sub rubriques" ref={ref} aria-label="Rubriques">
+      <div className="wrap">
+        {LIENS.map(([href, label]) => (
+          <Link key={href} href={href} className={actif(path, href) ? "on" : ""}>
+            {label}
+          </Link>
+        ))}
+        <Link href="/admin">🔒 Espace pro</Link>
+      </div>
+    </nav>
   );
 }
 
@@ -75,50 +96,42 @@ const ICONES: Record<string, React.ReactNode> = {
     </>
   ),
   "/classements": <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  "/medias": (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m10 9 5 3-5 3z" />
+    </>
+  ),
+  "/infos": (
+    <>
+      <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
 };
+
+// Barre du bas sur téléphone : les cinq rubriques les plus utiles, toujours visibles.
+const ONGLETS = [
+  ["/", "Accueil"],
+  ["/matchs", "Matchs"],
+  ["/medias", "Médias"],
+  ["/billetterie", "Billets"],
+  ["/infos", "Infos"],
+] as const;
 
 export function TabBar() {
   const path = usePathname();
-  const [plus, setPlus] = useState(false);
-  useEffect(() => setPlus(false), [path]);
   if (path.startsWith("/admin")) return null;
-  const onglets = LIENS.slice(0, 4);
-  const autres = LIENS.slice(4);
   return (
-    <>
-      <nav className="tabbar" aria-label="Navigation">
-        {onglets.map(([href, label]) => (
-          <Link key={href} href={href} className={actif(path, href) ? "on" : ""}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              {ICONES[href]}
-            </svg>
-            <span>{label === "Billetterie" ? "Billets" : label}</span>
-          </Link>
-        ))}
-        <button className={autres.some(([h]) => actif(path, h)) ? "on" : ""} onClick={() => setPlus((p) => !p)} aria-expanded={plus}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="5" cy="12" r="1.6" />
-            <circle cx="12" cy="12" r="1.6" />
-            <circle cx="19" cy="12" r="1.6" />
+    <nav className="tabbar" aria-label="Navigation">
+      {ONGLETS.map(([href, label]) => (
+        <Link key={href} href={href} className={actif(path, href) ? "on" : ""}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            {ICONES[href]}
           </svg>
-          <span>Plus</span>
-        </button>
-      </nav>
-      {plus && (
-        <div className="sheet-bg" onClick={(e) => e.target === e.currentTarget && setPlus(false)}>
-          <div className="sheet" role="dialog" aria-label="Plus de rubriques">
-            <div className="grab" />
-            <div className="sheet-grid">
-              {autres.map(([href, label]) => (
-                <Link key={href} href={href}>
-                  {label}
-                </Link>
-              ))}
-              <Link href="/admin">Espace pro</Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+          <span>{label}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }
