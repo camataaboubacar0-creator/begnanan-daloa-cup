@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Apparitions } from "@/components/Apparitions";
 import { Header, TabBar } from "@/components/Navigation";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
         <TabBar />
+        <Apparitions />
       </body>
     </html>
   );

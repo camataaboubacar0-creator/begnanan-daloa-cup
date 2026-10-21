@@ -12,7 +12,7 @@ function webglDisponible() {
 }
 
 /**
- * Bandeau vert d'accueil avec le logo en relief 3D.
+ * Bandeau vert d'accueil avec le logo en relief 3D au-dessus d'un terrain de football.
  * Le logo s'aligne sur l'élément [data-logo-3d] du contenu ; tant que la 3D n'est pas prête
  * (ou si l'appareil ne la permet pas), c'est l'image du logo qui reste affichée.
  */
@@ -20,6 +20,23 @@ export function Hero3D({ children }: { children: React.ReactNode }) {
   const zone = useRef<HTMLElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [pret, setPret] = useState(false);
+
+  // Progression du défilement à travers le bandeau (0 en haut, 1 quand il est sorti), pour la profondeur en CSS.
+  useEffect(() => {
+    const z = zone.current;
+    if (!z || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let id = 0;
+    const maj = () => {
+      id = 0;
+      z.style.setProperty("--defil", Math.min(1, Math.max(0, -z.getBoundingClientRect().top / z.clientHeight)).toFixed(3));
+    };
+    const defiler = () => (id ||= requestAnimationFrame(maj));
+    window.addEventListener("scroll", defiler, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", defiler);
+      cancelAnimationFrame(id);
+    };
+  }, []);
 
   useEffect(() => {
     const z = zone.current, c = canvas.current;
