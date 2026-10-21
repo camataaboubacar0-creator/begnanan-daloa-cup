@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Annonces } from "@/components/Annonces";
 import { Countdown } from "@/components/Countdown";
 import { Crest } from "@/components/Crest";
 import { MatchCard } from "@/components/MatchCard";
 import { Hero3D } from "@/components/logo3d/Hero3D";
-import { getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
+import { getAlertes, getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
 import { dateCourte, dateLongue, heure, jourCourt } from "@/lib/format";
 import { CartePublication } from "./medias/CartePublication";
 
@@ -18,10 +19,14 @@ const RUBRIQUES = [
   ["/equipes", "Équipes", "Les clubs engagés et leurs fiches"],
   ["/billetterie", "Billetterie", "Catégories, prix et réservation"],
   ["/infos", "Infos pratiques", "Lieu, itinéraire, horaires et alertes WhatsApp"],
+  ["/inscription-club", "Présidents de club", "Inscrire son club, ses joueurs et leurs licences"],
+  ["/admin", "Espace pro", "Comité, présidents, billetterie et médias"],
 ] as const;
 
 export default async function Accueil() {
-  const [tournoi, clubsListe, matchs, publications] = await Promise.all([getTournoi(), getClubs(), getMatchs(), getPublications()]);
+  const [tournoi, clubsListe, matchs, publications, alertes] = await Promise.all([getTournoi(), getClubs(), getMatchs(), getPublications(), getAlertes(3)]);
+  // Bandeau d'annonces : seulement celles des 4 derniers jours.
+  const recentes = alertes.filter((a) => Date.now() - new Date(a.publiee_le).getTime() < 4 * 86_400_000);
   const clubs = parId(clubsListe);
   const prochain = matchs.find((m) => m.statut === "programmé");
   const enDirect = matchs.filter((m) => m.statut === "en cours");
@@ -82,6 +87,21 @@ export default async function Accueil() {
           </div>
         </div>
       </Hero3D>
+
+      {recentes.length > 0 && (
+        <section className="band annonces-band">
+          <div className="wrap">
+            <div className="head">
+              <div>
+                <div className="eyebrow">Annonces du comité</div>
+                <h2>Dernières infos</h2>
+              </div>
+              <Link className="btn line sm" href="/infos#annonces">Toutes les annonces</Link>
+            </div>
+            <Annonces alertes={recentes} />
+          </div>
+        </section>
+      )}
 
       {(enDirect.length > 0 || recents.length > 0) && (
         <section className="live">

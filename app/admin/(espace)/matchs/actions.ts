@@ -1,6 +1,7 @@
 "use server";
 
 import { coche, ecrire, entier, texte, texteOuNull, type Etat } from "@/lib/admin";
+import { envoyerAnnoncesDuMatch } from "../annonces/actions";
 
 const club = (f: FormData) => ({
   nom: texte(f, "nom"),
@@ -50,7 +51,7 @@ export async function modifierMatch(_: Etat, f: FormData): Promise<Etat> {
   const valide = coche(f, "resultat_valide");
   if (statut === "terminé" && (bd === null || be === null)) return { erreur: "Saisissez le score avant de terminer le match." };
   if (valide && statut !== "terminé") return { erreur: "Seul un match terminé peut être validé." };
-  return ecrire("matchs", (db) =>
+  const r = await ecrire("matchs", (db) =>
     db
       .from("matchs")
       .update({
@@ -64,6 +65,12 @@ export async function modifierMatch(_: Etat, f: FormData): Promise<Etat> {
       })
       .eq("id", texte(f, "id")),
   );
+  // Match annulé, reporté ou interrompu : la base a créé l'annonce, on la diffuse tout de suite.
+  if (r.ok && ["annulé", "reporté", "interrompu"].includes(statut)) {
+    await envoyerAnnoncesDuMatch(texte(f, "id"));
+    return { ok: "Enregistré. Une annonce a été publiée sur le site (voir « Annonces »)." };
+  }
+  return r;
 }
 
 export async function supprimerMatch(_: Etat, f: FormData): Promise<Etat> {

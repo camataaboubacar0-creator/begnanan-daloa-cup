@@ -17,6 +17,7 @@ export default async function Equipes() {
             <h1 className="h2">Les clubs engagés</h1>
             <p>{clubs.length} club{clubs.length > 1 ? "s" : ""} inscrit{clubs.length > 1 ? "s" : ""} sur {tournoi.capacite_clubs} places.</p>
           </div>
+          <Link className="btn gold sm" href="/inscription-club">Inscrire mon club</Link>
         </div>
         {clubs.length ? (
           <div className="grid g4">

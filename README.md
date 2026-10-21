@@ -3,7 +3,8 @@
 Site officiel du tournoi de maracana BÊGNANAN DALOA CUP (Daloa).
 
 - **Côté supporters** : accueil avec compte à rebours et résultats en direct, calendrier filtrable, classements par poule calculés automatiquement, fiches des clubs, médias (débriefs vidéo, annonces, hommes du match, galerie), billetterie, infos pratiques et inscription aux alertes WhatsApp.
-- **Côté organisateurs** (`/admin`) : connexion par e-mail et mot de passe, droits selon le rôle (administrateur, comité, billetterie, médias). Paramètres du tournoi, clubs, matchs et scores avec validation, catégories et prix des billets, contrôle des billets à l'entrée, publications et galerie, gestion des comptes.
+- **Côté présidents de club** : demande d'inscription du club (`/inscription-club`), puis, une fois acceptée par le comité, un espace pour inscrire les joueurs et demander leurs licences (10 incluses par club, les suivantes au tarif fixé par le comité). Le président ajoute aussi son coach et son adjoint. Joueurs, président, coach et adjoint ont chacun une carte avec QR code de vérification, à imprimer au format carte bancaire. Pendant le mercato, les présidents demandent des transferts (un joueur ne peut être transféré qu'une fois).
+- **Côté organisateurs** (`/admin`) : connexion par e-mail et mot de passe, droits selon le rôle (administrateur, comité, billetterie, médias). Paramètres du tournoi, tirage au sort des poules et calendrier automatiques (modifiables ensuite), clubs, matchs et scores avec validation, annonces (incident, report, annulation) affichées sur le site et partagées sur WhatsApp, validation des cartes, mercato, catégories et prix des billets, contrôle des billets à l'entrée, publications et galerie, gestion des comptes.
 
 Technique : Next.js (React) hébergé sur Vercel, base de données et comptes sur Supabase. Les droits sont vérifiés par la base elle-même (sécurité par ligne), pas seulement par le site.
 
@@ -14,7 +15,7 @@ Aucun mot de passe ni clé ne doit être envoyé par message : ils se saisissent
 ### 1. Base de données (Supabase, offre gratuite)
 
 1. Créer un compte sur [supabase.com](https://supabase.com) puis un projet (région la plus proche : Europe).
-2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**. Si la base a été créée avec une version précédente de ce fichier, exécuter aussi [`0002_correctif_security_definer.sql`](supabase/migrations/0002_correctif_security_definer.sql).
+2. Dans **SQL Editor**, coller tout le fichier [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) et cliquer sur **Run**. Si la base a été créée avec une version précédente de ce fichier, exécuter aussi [`0002_correctif_security_definer.sql`](supabase/migrations/0002_correctif_security_definer.sql). Exécuter ensuite [`0003_clubs_licences.sql`](supabase/migrations/0003_clubs_licences.sql) (inscription des clubs et licences), puis [`0004_encadrement_mercato_alertes.sql`](supabase/migrations/0004_encadrement_mercato_alertes.sql) (coach et adjoint, mercato, annonces).
 3. Dans **Authentication → Users → Add user**, créer le premier compte administrateur (e-mail + mot de passe, cocher « Auto confirm »).
 4. Dans **SQL Editor**, donner le rôle administrateur à ce compte :
    ```sql
@@ -38,7 +39,7 @@ Aucun mot de passe ni clé ne doit être envoyé par message : ils se saisissent
 1. Aller sur `/admin`, se connecter avec le compte administrateur.
 2. **Tournoi** : vérifier dates, lieu et accroche. Cocher « Dates confirmées » quand elles le sont.
 3. **Comptes** : créer les comptes du comité, de la billetterie et des médias. Le mot de passe provisoire se remet en main propre ; chacun le change depuis son tableau de bord.
-4. **Clubs et matchs** : saisir les clubs, puis le calendrier. Pendant un match, mettre le statut « en cours » et le score ; à la fin, « terminé », puis cocher « Résultat validé » pour que le classement se mette à jour.
+4. **Tirage et calendrier** : lancer le tirage au sort, corriger les poules si besoin, puis générer le calendrier des poules. **Clubs et matchs** : ajuster un match (date, heure, terrain, report, annulation). Pendant un match, mettre le statut « en cours » et le score ; à la fin, « terminé », puis cocher « Résultat validé » pour que le classement se mette à jour.
 5. **Billetterie** : créer les catégories (prix, places par match) et cocher « En vente ».
 
 ## Développement
@@ -54,11 +55,14 @@ npm run build
 
 Sans variables Supabase, le site s'affiche quand même avec des listes vides, ce qui permet de vérifier la mise en page.
 
+## Envoi automatique des annonces sur WhatsApp (facultatif)
+
+Sans réglage, chaque annonce a un bouton « Partager sur WhatsApp » (groupe, chaîne ou liste de diffusion du comité). Pour un envoi direct à chaque abonné, il faut un compte WhatsApp Business Platform de Meta (numéro dédié, modèle de message approuvé avec deux variables : titre et texte ; envoi payant à la conversation), puis ajouter dans Vercel : `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_TEMPLATE` (nom du modèle) et, si besoin, `WHATSAPP_TEMPLATE_LANG` (par défaut `fr`).
+
 ## Prochaines étapes
 
 - Paiement mobile money (Orange Money, MTN MoMo, Moov Money, Wave) via CinetPay et e-billet avec QR code : nécessite un compte marchand CinetPay au nom du comité.
 - Lecture du QR code à la caméra pour le contrôle à l'entrée.
-- Espace des présidents de club (joueurs, licences, suivi du dossier).
 - Envoi automatique des alertes WhatsApp (WhatsApp Business).
 - Envoi des photos directement depuis l'espace médias (aujourd'hui : lien vers l'image).
 
