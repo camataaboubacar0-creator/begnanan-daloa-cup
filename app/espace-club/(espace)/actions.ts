@@ -12,13 +12,12 @@ import { createClient } from "@/lib/supabase/server";
 const joueur = (f: FormData) => ({
   nom: texte(f, "nom").slice(0, 60),
   prenoms: texte(f, "prenoms").slice(0, 80),
-  date_naissance: texte(f, "date_naissance"),
   poste: texteOuNull(f, "poste"),
   numero_maillot: entier(f, "numero_maillot"),
 });
 
 const valide = (j: ReturnType<typeof joueur>) =>
-  !j.nom || !j.prenoms || !/^\d{4}-\d{2}-\d{2}$/.test(j.date_naissance) ? "Nom, prénoms et date de naissance sont obligatoires." : null;
+  !j.nom || !j.prenoms ? "Nom et prénoms sont obligatoires." : null;
 
 const encadrant = (f: FormData) => ({ nom: texte(f, "nom").slice(0, 60), prenoms: texte(f, "prenoms").slice(0, 80), telephone: texteOuNull(f, "telephone") });
 

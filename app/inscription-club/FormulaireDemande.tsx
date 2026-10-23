@@ -9,7 +9,7 @@ const POSTES = ["Gardien", "Défenseur", "Milieu", "Attaquant"];
 function Encadrant({ cle, titre }: { cle: "coach" | "adjoint"; titre: string }) {
   return (
     <fieldset className="bloc-form">
-      <legend>{titre} <span className="small">(facultatif, ajout possible plus tard)</span></legend>
+      <legend>{titre}</legend>
       <div className="form-grid">
         <label className="field">Nom<input name={`${cle}_nom`} maxLength={60} /></label>
         <label className="field">Prénoms<input name={`${cle}_prenoms`} maxLength={80} /></label>
@@ -23,8 +23,8 @@ function Encadrant({ cle, titre }: { cle: "coach" | "adjoint"; titre: string }) 
 export function FormulaireDemande() {
   const [etat, action, envoi] = useActionState<EtatDemande, FormData>(deposerDemande, {});
   // Clés stables des lignes de joueurs (ajout et retrait sans perdre la saisie des autres).
-  const [joueurs, setJoueurs] = useState<number[]>([0]);
-  const [suivant, setSuivant] = useState(1);
+  const [joueurs, setJoueurs] = useState<number[]>([]);
+  const [suivant, setSuivant] = useState(0);
 
   if (etat.ok)
     return (
@@ -70,13 +70,18 @@ export function FormulaireDemande() {
         </div>
       </fieldset>
 
+      <details className="bloc-facultatif">
+        <summary>
+          <b>Facultatif : coach, adjoint et joueurs</b>
+          <span className="small">Vous pouvez les ajouter maintenant ou plus tard, depuis l&apos;espace de votre club.</span>
+        </summary>
       <Encadrant cle="coach" titre="4. Le coach" />
       <Encadrant cle="adjoint" titre="5. Le coach adjoint" />
 
       <fieldset className="bloc-form">
         <legend>6. Les joueurs <span className="small">({joueurs.length})</span></legend>
         <p className="small" style={{ margin: "0 0 10px" }}>
-          La photo figurera sur la licence. Vous pourrez aussi ajouter ou retirer des joueurs plus tard, depuis l&apos;espace de votre club.
+          Nom et prénoms suffisent ; la photo figurera sur la licence. Vous pourrez aussi ajouter ou retirer des joueurs plus tard, depuis l&apos;espace de votre club.
         </p>
         <input type="hidden" name="joueurs" value={joueurs.join(",")} />
         <div className="joueurs-form">
@@ -89,7 +94,6 @@ export function FormulaireDemande() {
               <div className="form-grid">
                 <label className="field">Nom<input name={`j${k}_nom`} maxLength={60} /></label>
                 <label className="field">Prénoms<input name={`j${k}_prenoms`} maxLength={80} /></label>
-                <label className="field">Date de naissance<input name={`j${k}_naissance`} type="date" /></label>
                 <label className="field">Poste
                   <select name={`j${k}_poste`} defaultValue="">
                     <option value="">—</option>
@@ -108,6 +112,7 @@ export function FormulaireDemande() {
           </button>
         )}
       </fieldset>
+      </details>
 
       <label className="field full">Message pour le comité (facultatif)<textarea name="message" rows={3} maxLength={500} /></label>
       {etat.erreur && <p className="form-err full">{etat.erreur}</p>}

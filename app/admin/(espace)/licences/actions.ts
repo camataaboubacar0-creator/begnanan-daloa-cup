@@ -64,7 +64,7 @@ export async function accepterDemande(_: Etat, f: FormData): Promise<Etat> {
   ]);
   let licences = 0;
   for (const j of d.joueurs ?? []) {
-    const joueur = { club_id: club.id, nom: j.nom, prenoms: j.prenoms, date_naissance: j.date_naissance, poste: j.poste, numero_maillot: j.numero_maillot, photo_url: j.photo_url };
+    const joueur = { club_id: club.id, nom: j.nom, prenoms: j.prenoms, date_naissance: j.date_naissance || null, poste: j.poste, numero_maillot: j.numero_maillot, photo_url: j.photo_url };
     // Licence demandée d'office ; au-delà du quota sans tarif fixé, le joueur reste en brouillon.
     const { error } = await db.from("joueurs").insert({ ...joueur, etat: "soumise" });
     if (!error) licences++;

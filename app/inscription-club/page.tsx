@@ -26,7 +26,7 @@ export default async function InscriptionClub() {
           <div className="card">
             <h3 style={{ marginBottom: 10 }}>Comment ça marche</h3>
             <ol className="etapes">
-              <li><b>Vous remplissez ce formulaire</b> : le club et son logo, le président, le coach et l&apos;adjoint, les joueurs avec leurs photos. Vous choisissez aussi votre identifiant et votre mot de passe.</li>
+              <li><b>Vous remplissez ce formulaire</b> : seuls le club et le président sont obligatoires, avec l&apos;identifiant et le mot de passe que vous choisissez. Le logo, le coach, l&apos;adjoint et les joueurs sont facultatifs : vous pourrez les ajouter ensuite.</li>
               <li><b>Le comité examine la demande</b> et vous contacte sur WhatsApp.</li>
               <li><b>Dès qu&apos;il l&apos;accepte</b>, vous vous connectez à l&apos;espace club avec votre identifiant : vous y gérez vos joueurs, votre encadrement et le profil du club.</li>
               <li><b>Depuis l&apos;espace de votre club</b>, vous complétez le profil, ajoutez ou retirez des joueurs, demandez leurs licences, écrivez au comité et participez au mercato.</li>

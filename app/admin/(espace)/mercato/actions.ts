@@ -1,6 +1,8 @@
 "use server";
 
 import { coche, ecrire, entier, texte, type Etat } from "@/lib/admin";
+import { exigerAcces } from "@/lib/auth";
+import { createServiceClient } from "@/lib/supabase/server";
 
 // Toutes les règles du mercato sont appliquées par la base (fonctions demander/répondre/valider_transfert).
 
@@ -14,12 +16,41 @@ export async function disqualifierClub(_: Etat, f: FormData): Promise<Etat> {
   return ecrire("mercato", (db) => db.from("clubs").update({ disqualifie: oui }).eq("id", texte(f, "id")), oui ? "Club disqualifié." : "Club réintégré.");
 }
 
+/**
+ * Retrouve le numéro de licence à partir d'un numéro (BDC-…) ou du nom du joueur. Les présidents ne
+ * voient pas les joueurs des autres clubs : la recherche par nom passe par le serveur et ne renvoie
+ * que des joueurs licenciés d'autres clubs (nom, club et numéro, déjà visibles sur leurs cartes).
+ */
+async function numeroDuJoueur(saisie: string, monClub?: string): Promise<{ numero: string } | { erreur: string }> {
+  if (/^BDC-/i.test(saisie)) return { numero: saisie.toUpperCase().replace(/\s+/g, "") };
+  const mots = saisie.replace(/[,()%*\\.]/g, " ").split(/\s+/).filter((m) => m.length >= 2).slice(0, 4);
+  if (!mots.length) return { erreur: "Indiquez le numéro de licence ou le nom du joueur." };
+  let requete = createServiceClient().from("joueurs").select("numero_licence, nom, prenoms, club_id, clubs(nom)").eq("etat", "active").not("numero_licence", "is", null);
+  if (monClub) requete = requete.neq("club_id", monClub);
+  for (const m of mots) requete = requete.or(`nom.ilike.%${m}%,prenoms.ilike.%${m}%`);
+  const { data, error } = await requete.limit(6);
+  if (error) {
+    console.error(error);
+    return { erreur: "Recherche impossible pour le moment. Indiquez le numéro de licence." };
+  }
+  if (!data?.length) return { erreur: `Aucun joueur licencié ne correspond à « ${saisie} ».` };
+  if (data.length > 1) {
+    const club = (c: unknown) => (Array.isArray(c) ? c[0]?.nom : (c as { nom?: string } | null)?.nom) ?? "";
+    const liste = data.map((j) => `${j.prenoms} ${j.nom} (${club(j.clubs)}, ${j.numero_licence})`).join(" ; ");
+    return { erreur: `Plusieurs joueurs correspondent : ${liste}. Précisez le nom ou indiquez le numéro de licence.` };
+  }
+  return { numero: data[0].numero_licence! };
+}
+
 export async function demanderTransfert(_: Etat, f: FormData): Promise<Etat> {
-  const numero = texte(f, "numero");
+  const orga = await exigerAcces("mercato");
+  const saisie = texte(f, "numero").slice(0, 80);
   const montant = entier(f, "montant");
-  if (!numero) return { erreur: "Indiquez le numéro de licence du joueur." };
+  if (!saisie) return { erreur: "Indiquez le numéro de licence ou le nom du joueur." };
   if (montant !== null && (Number.isNaN(montant) || montant < 0)) return { erreur: "Montant invalide." };
-  return ecrire("mercato", (db) => db.rpc("demander_transfert", { p_numero: numero, p_montant: montant }), "Demande envoyée au club du joueur.");
+  const joueur = await numeroDuJoueur(saisie, orga.club_id);
+  if ("erreur" in joueur) return joueur;
+  return ecrire("mercato", (db) => db.rpc("demander_transfert", { p_numero: joueur.numero, p_montant: montant }), "Demande envoyée au club du joueur.");
 }
 
 export async function repondreTransfert(_: Etat, f: FormData): Promise<Etat> {

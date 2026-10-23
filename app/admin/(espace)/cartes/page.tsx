@@ -32,9 +32,9 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
       <div className="no-print">
         <h3 style={{ marginBottom: 6 }}>Cartes à imprimer{club ? ` · ${club.nom}` : ""}</h3>
         <p className="small" style={{ marginBottom: 12 }}>
-          Seules les cartes validées par le comité apparaissent. À l&apos;impression, elles sont au format carte bancaire (85,6 × 54 mm),
-          8 par page A4 : imprimez en couleur, à 100 % (sans « ajuster à la page »), puis découpez et plastifiez.
-        </p>
+          Seules les cartes validées par le comité apparaissent. Chaque carte a deux faces : le recto (logo et nom du tournoi) et le verso
+          (photo, informations et QR code). À l&apos;impression, 4 cartes par page A4 : imprimez en couleur, à 100 % (sans « ajuster à la page »),
+          découpez le long des pointillés extérieurs, pliez sur le trait du milieu (recto et verso dos à dos), puis plastifiez.</p>
         <div className="form-row" style={{ marginBottom: 16 }}>
           {orga.role !== "president" && (
             <form className="form-row" method="get">

@@ -21,7 +21,8 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
     <section className="band">
       <div className="wrap">
         <div className="card verif">
-          <div className="eyebrow">Vérification de {encadrement ? "carte" : "licence"}</div>
+          <img className="verif-logo" src="/logo-small.webp" alt="" />
+          <div className="eyebrow">Bêgnanan Daloa Cup · vérification de {encadrement ? "carte" : "licence"}</div>
           {licence ? (
             <>
               <div className={`etat ${licence.active ? "ok" : "bad"}`}>
@@ -31,7 +32,7 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
               {licence.photo_url && <img className="verif-photo" src={licence.photo_url} alt={`${licence.prenoms} ${licence.nom}`} />}
               <h2 style={{ fontSize: "1.6rem" }}>{licence.prenoms} {licence.nom}</h2>
               <p className="lic-club">{licence.logo_url && <img src={licence.logo_url} alt="" />}{licence.club}{licence.poste ? ` · ${licence.poste}` : ""}</p>
-              <p className="small mono">{licence.numero}</p>
+              <p className="small mono">{licence.numero} · saison {new Date().getFullYear()}</p>
               {!licence.active && (
                 <p className="small">
                   {encadrement ? "Cette personne n'est pas autorisée sur le banc tant que le comité n'a pas validé sa carte." : "Ce joueur ne peut pas être aligné tant que le comité n'a pas réactivé sa licence."}
