@@ -1,12 +1,25 @@
 import type { Metadata, Viewport } from "next";
 import { Apparitions } from "@/components/Apparitions";
+import { Analytics } from "@vercel/analytics/next";
 import { Header, TabBar } from "@/components/Navigation";
+import { EnregistrementHorsLigne } from "@/components/HorsLigne";
 import "./globals.css";
 
+const DESCRIPTION = "Tournoi de maracana à Daloa : billetterie, matchs, résultats, classements et médias.";
+
+// Adresse de production : liens absolus des aperçus de partage (WhatsApp, Facebook) et du plan du site.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "begnanan-daloa-cup.vercel.app"}`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE),
   title: { default: "BÊGNANAN DALOA CUP", template: "%s · BÊGNANAN DALOA CUP" },
-  description: "Tournoi de maracana à Daloa : billetterie, matchs, résultats, classements et médias.",
+  description: DESCRIPTION,
   icons: { icon: "/logo-small.webp" },
+  applicationName: "Bêgnanan Cup",
+  appleWebApp: { capable: true, title: "Bêgnanan Cup", statusBarStyle: "default" },
+  // Image de partage : app/opengraph-image.jpg (1200 × 630, moins de 300 Ko pour WhatsApp).
+  openGraph: { type: "website", locale: "fr_FR", siteName: "BÊGNANAN DALOA CUP", description: DESCRIPTION },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0e6a26" };
@@ -43,6 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </footer>
         <TabBar />
         <Apparitions />
+        <EnregistrementHorsLigne />
+        <Analytics />
       </body>
     </html>
   );
