@@ -1,0 +1,77 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Crest } from "@/components/Crest";
+import { StatutPill } from "@/components/StatutMatch";
+import { getClubs, getEvenements, getMatchs, parId } from "@/lib/data";
+import { heure, jourCourt, lienWhatsApp } from "@/lib/format";
+import { Actualisation } from "./Actualisation";
+
+export const revalidate = 15;
+
+const LIBELLES = { but: "But", csc: "But contre son camp", jaune: "Carton jaune", rouge: "Carton rouge" };
+const ICONES = { but: "⚽", csc: "⚽", jaune: "🟨", rouge: "🟥" };
+
+async function charger(id: string) {
+  const [matchs, clubs] = await Promise.all([getMatchs(), getClubs()]);
+  const match = matchs.find((m) => m.id === id);
+  return match ? { match, clubs: parId(clubs) } : null;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const d = await charger((await params).id);
+  if (!d) return {};
+  return { title: `${d.clubs.get(d.match.club_domicile)?.nom ?? "?"} – ${d.clubs.get(d.match.club_exterieur)?.nom ?? "?"}` };
+}
+
+/** Page d'un match : score, buts et cartons ; se met à jour toute seule pendant le match. */
+export default async function PageMatch({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const d = await charger(id);
+  if (!d) notFound();
+  const { match, clubs } = d;
+  const evenements = await getEvenements(id);
+  const dom = clubs.get(match.club_domicile);
+  const ext = clubs.get(match.club_exterieur);
+  const score = match.statut === "en cours" || match.statut === "terminé";
+  const titre = `${dom?.nom ?? "?"} – ${ext?.nom ?? "?"}`;
+
+  return (
+    <section className="band">
+      <div className="wrap" style={{ maxWidth: 720 }}>
+        <Link className="small" href="/matchs">← Tous les matchs</Link>
+        <div className="card match-direct">
+          <div className="eyebrow">{match.poule ? `Poule ${match.poule}` : match.phase} · {jourCourt(match.date_heure)} à {heure(match.date_heure)} · {match.terrain}</div>
+          <div className="match-direct-score">
+            <div><Crest club={dom} size="crest" /><b>{dom?.nom}</b></div>
+            <h1 className="num">{score ? `${match.buts_domicile ?? 0} – ${match.buts_exterieur ?? 0}` : heure(match.date_heure)}</h1>
+            <div><Crest club={ext} size="crest" /><b>{ext?.nom}</b></div>
+          </div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+            <StatutPill statut={match.statut} />
+            {match.statut === "terminé" && !match.resultat_valide && <span className="small">Résultat provisoire</span>}
+            {match.statut === "en cours" && <Actualisation />}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 style={{ fontSize: "1.35rem", marginBottom: 10 }}>Déroulé du match</h2>
+          {evenements.length ? (
+            <ol className="deroule">
+              {evenements.map((e) => (
+                <li key={e.id} className={e.club_id === match.club_domicile ? "dom" : "ext"}>
+                  <span className="num">{e.minute !== null ? `${e.minute}'` : ""}</span>
+                  <span>{ICONES[e.type]} {LIBELLES[e.type]}{e.joueur_nom ? ` · ${e.joueur_nom}` : ""}</span>
+                  <span className="small">{clubs.get(e.club_id)?.sigle}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="small">{score ? "Aucun but ni carton pour l'instant." : "Le déroulé s'affichera ici pendant le match."}</p>
+          )}
+        </div>
+        <a className="btn line sm" href={lienWhatsApp(`${titre}${score ? ` : ${match.buts_domicile ?? 0}-${match.buts_exterieur ?? 0}` : ""} · BÊGNANAN DALOA CUP`)} target="_blank" rel="noopener">Partager sur WhatsApp</a>
+      </div>
+    </section>
+  );
+}

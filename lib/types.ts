@@ -42,6 +42,28 @@ export interface Match {
   resultat_valide: boolean;
 }
 
+export type TypeEvenement = "but" | "csc" | "jaune" | "rouge";
+
+/** But ou carton saisi pendant un match ; club_id = équipe à qui il est compté. */
+export interface EvenementMatch {
+  id: string;
+  match_id: string;
+  club_id: string;
+  type: TypeEvenement;
+  joueur_id: string | null;
+  joueur_nom: string | null;
+  minute: number | null;
+  cree_le: string;
+}
+
+export interface Buteur {
+  joueur_nom: string;
+  club_id: string;
+  buts: number;
+  jaunes: number;
+  rouges: number;
+}
+
 export interface CategorieBillet {
   id: string;
   nom: string;
@@ -89,8 +111,8 @@ export interface LigneClassement {
 }
 
 export const ROLES: Record<Role, { label: string; pages: string[] }> = {
-  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes"] },
-  comite: { label: "Comité", pages: ["tournoi", "matchs", "tirage", "annonces", "licences", "mercato", "cartes", "messages"] },
+  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes"] },
+  comite: { label: "Comité", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages"] },
   billetterie: { label: "Billetterie", pages: ["billets"] },
   medias: { label: "Médias", pages: ["medias"] },
   president: { label: "Président de club", pages: ["club", "mercato", "cartes", "messages"] },

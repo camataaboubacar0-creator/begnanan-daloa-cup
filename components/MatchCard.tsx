@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Club, Match } from "@/lib/types";
 import { heure, lienWhatsApp } from "@/lib/format";
 import { Crest } from "./Crest";
@@ -38,6 +39,7 @@ export function MatchCard({ match, clubs }: { match: Match; clubs: Map<string, C
           {match.poule ? ` · Poule ${match.poule}` : ` · ${match.phase}`}
         </span>
         {match.statut === "terminé" && !match.resultat_valide && <span className="small">Résultat provisoire</span>}
+        <Link className="small" href={`/matchs/${match.id}`}>{match.statut === "en cours" ? "Suivre en direct" : "Détails du match"}</Link>
         <a className="small" href={lienWhatsApp(`${titre} · BÊGNANAN DALOA CUP`)} target="_blank" rel="noopener">
           Partager
         </a>
