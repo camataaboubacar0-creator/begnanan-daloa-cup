@@ -46,7 +46,7 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
               <button className="btn line sm">Afficher</button>
             </form>
           )}
-          {staff.length + js.length > 0 && <BoutonImprimer libelle={`Imprimer les ${staff.length + js.length} cartes`} />}
+          {staff.length + js.length > 0 && <BoutonImprimer libelle={`Imprimer les ${staff.length + js.length} cartes`} fichier={`cartes-${club!.nom.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`} />}
         </div>
       </div>
       {!club && <p className="small">Aucun club pour l&apos;instant.</p>}
