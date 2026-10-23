@@ -1,6 +1,6 @@
 import "server-only";
 import { createPublicClient, supabaseConfigured } from "./supabase/server";
-import type { Alerte, CategorieBillet, Club, LigneClassement, Match, Photo, Publication, Tournoi } from "./types";
+import type { Alerte, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, Tournoi } from "./types";
 
 const TOURNOI_PAR_DEFAUT: Tournoi = {
   nom: "BÊGNANAN DALOA CUP",
@@ -22,6 +22,8 @@ async function lire<T>(requete: (db: ReturnType<typeof createPublicClient>) => P
   const db = createPublicClient();
   const { data, error } = await requete(db);
   if (error) {
+    // Table pas encore créée (migration en attente) : la fonction correspondante reste vide.
+    if (["PGRST205", "42P01"].includes((error as { code?: string }).code ?? "")) return vide;
     console.error(error);
     throw new Error("Base de données indisponible");
   }
@@ -68,3 +70,13 @@ export const getPlacesRestantes = (matchId: string) =>
 /** Dernières annonces du comité (incidents, reports, annulations…). */
 export const getAlertes = (nombre = 10) =>
   lire<Alerte[]>((db) => db.from("alertes").select("*").order("publiee_le", { ascending: false }).limit(nombre), []);
+
+/** Buts et cartons d'un match, dans l'ordre du match. */
+export const getEvenements = (matchId: string) =>
+  lire<EvenementMatch[]>(
+    (db) => db.from("evenements_match").select("*").eq("match_id", matchId).order("minute", { nullsFirst: false }).order("cree_le"),
+    [],
+  );
+
+/** Buteurs et cartons du tournoi (vue « buteurs »). */
+export const getButeurs = () => lire<Buteur[]>((db) => db.from("buteurs").select("*"), []);

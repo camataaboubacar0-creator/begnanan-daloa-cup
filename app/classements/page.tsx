@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Crest } from "@/components/Crest";
 import { trierClassement } from "@/lib/classement";
-import { getClassement } from "@/lib/data";
+import { getButeurs, getClassement, getClubs, parId } from "@/lib/data";
 import type { Club } from "@/lib/types";
 
 export const revalidate = 30;
@@ -39,7 +39,10 @@ function Tableau() {
 }
 
 export default async function Classements() {
-  const lignes = await getClassement();
+  const [lignes, buteurs, clubs] = await Promise.all([getClassement(), getButeurs(), getClubs()]);
+  const index = parId(clubs);
+  const meilleurs = buteurs.filter((b) => b.buts > 0).sort((a, b) => b.buts - a.buts || a.joueur_nom.localeCompare(b.joueur_nom, "fr")).slice(0, 10);
+  const sanctions = buteurs.filter((b) => b.jaunes + b.rouges > 0).sort((a, b) => b.rouges - a.rouges || b.jaunes - a.jaunes).slice(0, 10);
   const poules = POULES.map((p) => ({ poule: p, ...trierClassement(lignes.filter((l) => l.poule === p)) })).filter((p) => p.triees.length);
 
   return (
@@ -97,6 +100,61 @@ export default async function Classements() {
             <div className="card vide"><h3>Classements à venir</h3><p className="small">Les poules seront affichées après le tirage au sort.</p></div>
           )}
           <p className="small" style={{ marginTop: 12 }}>Liseré vert : places qualificatives (format à confirmer).</p>
+        </div>
+      </section>
+      <section className="band">
+        <div className="wrap">
+          <div className="head">
+            <div>
+              <div className="eyebrow">Joueurs</div>
+              <h2>Buteurs et cartons</h2>
+              <p>Mis à jour pendant les matchs par le comité. Les buts contre son camp ne comptent pas pour les buteurs.</p>
+            </div>
+          </div>
+          {meilleurs.length + sanctions.length ? (
+            <div className="grid g2">
+              <div>
+                <h3 style={{ marginBottom: 10 }}>Meilleurs buteurs</h3>
+                {meilleurs.length ? (
+                  <div className="tbl-wrap">
+                    <table>
+                      <thead><tr><th>#</th><th>Joueur</th><th className="n">Buts</th></tr></thead>
+                      <tbody>
+                        {meilleurs.map((b, i) => (
+                          <tr key={b.joueur_nom + b.club_id}>
+                            <td className="rank">{i + 1}</td>
+                            <td><b>{b.joueur_nom}</b> <span className="small">{index.get(b.club_id)?.nom}</span></td>
+                            <td className="n pts">{b.buts}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="small">Aucun but pour l&apos;instant.</p>}
+              </div>
+              <div>
+                <h3 style={{ marginBottom: 10 }}>Cartons</h3>
+                {sanctions.length ? (
+                  <div className="tbl-wrap">
+                    <table>
+                      <thead><tr><th>Joueur</th><th className="n">🟨</th><th className="n">🟥</th></tr></thead>
+                      <tbody>
+                        {sanctions.map((b) => (
+                          <tr key={b.joueur_nom + b.club_id}>
+                            <td><b>{b.joueur_nom}</b> <span className="small">{index.get(b.club_id)?.nom}</span></td>
+                            <td className="n">{b.jaunes}</td>
+                            <td className="n">{b.rouges}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="small">Aucun carton pour l&apos;instant.</p>}
+              </div>
+            </div>
+          ) : (
+            <div className="card vide"><h3>Pas encore de buteur</h3><p className="small">Le classement des buteurs commencera avec le premier match.</p></div>
+          )}
         </div>
       </section>
       <section className="band alt">
