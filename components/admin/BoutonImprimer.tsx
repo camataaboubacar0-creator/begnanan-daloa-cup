@@ -15,7 +15,7 @@ const PAR_PAGE = 4;
  * environ 300 points par pouce, ce qui garde le QR code net.
  */
 async function pdfDesCartes(fichier: string) {
-  const [{ toPng }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
+  const [{ toJpeg }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
   const gauche = (210 - 2 * L) / 2;
   const cartes = [...document.querySelectorAll<HTMLElement>(".cartes-print .carte")];
@@ -24,8 +24,9 @@ async function pdfDesCartes(fichier: string) {
     const y = MARGE_HAUT + (i % PAR_PAGE) * (H + ECART);
     const faces = [...carte.querySelectorAll<HTMLElement>(".face")];
     for (const [j, face] of faces.entries()) {
-      const image = await toPng(face, { pixelRatio: 1011 / face.offsetWidth, cacheBust: true, style: { borderRadius: "0", boxShadow: "none" } });
-      pdf.addImage(image, "PNG", gauche + j * L, y, L, H);
+      // JPEG : un PDF léger (quelques centaines de Ko par page) que le téléphone ouvre vite.
+      const image = await toJpeg(face, { pixelRatio: 1011 / face.offsetWidth, quality: 0.9, backgroundColor: "#ffffff", cacheBust: true, style: { borderRadius: "0", boxShadow: "none" } });
+      pdf.addImage(image, "JPEG", gauche + j * L, y, L, H);
     }
     // Pointillés : découpe autour de la carte, pliage au milieu.
     pdf.setDrawColor(150, 160, 155);
