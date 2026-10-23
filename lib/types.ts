@@ -14,6 +14,11 @@ export interface Tournoi {
   licences_incluses?: number;
   tarif_licence_fcfa?: number | null;
   mercato_ouvert?: boolean;
+  /** Temps de jeu en minutes, vide tant que le comité ne l'a pas fixé. */
+  duree_mi_temps?: number | null;
+  duree_prolongation?: number | null;
+  /** Tireurs par équipe avant la mort subite. */
+  tab_tireurs?: number;
 }
 
 export interface Club {
@@ -40,6 +45,25 @@ export interface Match {
   buts_domicile: number | null;
   buts_exterieur: number | null;
   resultat_valide: boolean;
+  periode?: Periode | null;
+  periode_terminee?: boolean;
+  chrono_lance?: string | null;
+  chrono_ecoule?: number;
+  tab_domicile?: number | null;
+  tab_exterieur?: number | null;
+}
+
+export type Periode = "mt1" | "mt2" | "prol1" | "prol2" | "tab";
+
+/** Tir de la séance de tirs au but ; ordre = rang du tir dans la séance. */
+export interface TirAuBut {
+  id: string;
+  match_id: string;
+  club_id: string;
+  ordre: number;
+  joueur_id: string | null;
+  joueur_nom: string | null;
+  reussi: boolean;
 }
 
 // Le tournoi a deux cartons : exclusion de 2 minutes et exclusion de 5 minutes. Dans la base,
