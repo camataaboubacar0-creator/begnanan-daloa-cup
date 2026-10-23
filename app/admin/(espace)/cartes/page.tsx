@@ -1,6 +1,7 @@
 import { BoutonImprimer } from "@/components/admin/BoutonImprimer";
 import { CarteEncadrant, CarteLicence } from "@/components/licence/CarteLicence";
 import { exigerAcces } from "@/lib/auth";
+import { getSaison } from "@/lib/data";
 import { adresseDuSite } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import type { Club, Encadrant, Joueur } from "@/lib/types";
@@ -25,7 +26,7 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
     : [{ data: [] }, { data: [] }];
   const staff = ((encadrants ?? []) as Encadrant[]).sort((a, b) => ORDRE[a.fonction] - ORDRE[b.fonction]);
   const js = (joueurs ?? []) as Joueur[];
-  const base = await adresseDuSite();
+  const [base, saison] = await Promise.all([adresseDuSite(), getSaison()]);
 
   return (
     <div className="card">
@@ -55,9 +56,9 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
       )}
       <div className="cartes-print">
         {staff.length > 0 && <h3>Encadrement</h3>}
-        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} logo={club!.logo_url} base={base} />)}
+        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} />)}
         {js.length > 0 && <h3>Joueurs</h3>}
-        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} logo={club!.logo_url} base={base} />)}
+        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} />)}
       </div>
     </div>
   );

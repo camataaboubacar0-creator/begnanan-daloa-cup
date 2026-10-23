@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { emailDepuisIdentifiant, identifiantAffiche } from "@/lib/identifiant";
-import { deposerPhoto, fichierPhoto, photoInvalide } from "@/lib/photos";
+import { deposerPhoto, fichierPhoto, photoInvalide, retirerPhotos } from "@/lib/photos";
 import { createServiceClient, supabaseConfigured } from "@/lib/supabase/server";
 
 export type EtatDemande = { ok?: boolean; identifiant?: string; erreur?: string };
@@ -70,9 +70,15 @@ export async function deposerDemande(_: EtatDemande, f: FormData): Promise<EtatD
     return { erreur: e1?.message.includes("already") ? "Cet identifiant est déjà utilisé : choisissez-en un autre." : "Envoi impossible pour le moment, réessayez plus tard." };
   }
 
+  // Photos déjà déposées, supprimées si la demande n'aboutit pas.
+  const deposees: string[] = [];
   try {
     const dossier = `demandes/${randomUUID()}`;
-    const photo = (fichier: File | null) => deposerPhoto(admin, dossier, fichier);
+    const photo = async (fichier: File | null) => {
+      const url = await deposerPhoto(admin, dossier, fichier);
+      if (url) deposees.push(url);
+      return url;
+    };
     const { error } = await admin.from("demandes_club").insert({
       ...base,
       email: id.email,
@@ -86,7 +92,7 @@ export async function deposerDemande(_: EtatDemande, f: FormData): Promise<EtatD
     if (error) throw error;
   } catch (e) {
     console.error(e);
-    await admin.auth.admin.deleteUser(compte.user.id);
+    await Promise.all([admin.auth.admin.deleteUser(compte.user.id), retirerPhotos(deposees)]);
     return { erreur: e instanceof Error && e.message.startsWith("Envoi de la photo") ? e.message : "Envoi impossible pour le moment, réessayez plus tard." };
   }
   return { ok: true, identifiant: identifiantAffiche(id.email) };

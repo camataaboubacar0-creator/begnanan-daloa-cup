@@ -2,7 +2,7 @@
 
 import { ecrire, entier, texte, texteOuNull, type Etat } from "@/lib/admin";
 import { exigerClub } from "@/lib/auth";
-import { deposerPhoto, fichierPhoto, photoInvalide } from "@/lib/photos";
+import { deposerPhoto, fichierPhoto, photoInvalide, retirerPhotos } from "@/lib/photos";
 import { createClient } from "@/lib/supabase/server";
 
 // Espace club. Le club vient toujours du compte connecté ; la base le vérifie aussi (sécurité par ligne).
@@ -34,6 +34,16 @@ async function photoDuClub(f: FormData, champ: string): Promise<{ url: string | 
   } catch (e) {
     return { erreur: (e as Error).message };
   }
+}
+
+/**
+ * Supprime l'ancienne photo d'une fiche, seulement si la nouvelle a bien été enregistrée : la base
+ * peut refuser la mise à jour sans erreur (fiche déjà validée), et l'ancienne photo sert alors encore.
+ */
+async function retirerAnciennePhoto(table: "joueurs" | "encadrants", id: string, ancienne: string | null | undefined, nouvelle: string) {
+  if (!id || !ancienne || ancienne === nouvelle) return;
+  const { data } = await (await createClient()).from(table).select("photo_url").eq("id", id).single();
+  if (data?.photo_url === nouvelle) await retirerPhotos([ancienne]);
 }
 
 /** Demande de modification ou de retrait, appliquée seulement quand le comité l'accepte. */
@@ -82,17 +92,18 @@ export async function modifierJoueur(_: Etat, f: FormData): Promise<Etat> {
   const erreur = valide(j);
   if (erreur) return { erreur };
   const demander = f.get("demander") === "on";
-  if (demander && !fichierPhoto(f, "photo")) {
-    const { data } = await (await createClient()).from("joueurs").select("photo_url").eq("id", id).single();
-    if (!data?.photo_url) return { erreur: PHOTO_LICENCE };
-  }
+  const { data: avant } = await (await createClient()).from("joueurs").select("photo_url").eq("id", id).single();
+  if (demander && !fichierPhoto(f, "photo") && !avant?.photo_url) return { erreur: PHOTO_LICENCE };
   const photo = await photoDuClub(f, "photo");
   if ("erreur" in photo) return photo;
-  return ecrire(
+  const etat = await ecrire(
     "club",
     (db) => db.from("joueurs").update({ ...j, etat: demander ? "soumise" : "brouillon", ...(photo.url ? { photo_url: photo.url } : {}) }).eq("id", id),
     demander ? "Licence demandée au comité." : "Enregistré.",
   );
+  // Photo remplacée : l'ancienne ne sert plus (brouillon ou licence à corriger, jamais imprimée).
+  if (etat.ok && photo.url) await retirerAnciennePhoto("joueurs", id, avant?.photo_url, photo.url);
+  return etat;
 }
 
 /** Brouillon ou licence refusée : rien n'a été validé, le club le retire lui-même. */
@@ -135,11 +146,14 @@ export async function enregistrerEncadrant(_: Etat, f: FormData): Promise<Etat> 
   if ("erreur" in photo) return photo;
   const id = texte(f, "id");
   const avecPhoto = { ...fiche, ...(photo.url ? { photo_url: photo.url } : {}) };
-  return ecrire(
+  const { data: avant } = id && photo.url ? await (await createClient()).from("encadrants").select("photo_url").eq("id", id).single() : { data: null };
+  const etat = await ecrire(
     "club",
     (db) => (id ? db.from("encadrants").update(avecPhoto).eq("id", id) : db.from("encadrants").insert({ ...avecPhoto, fonction, club_id })),
     "Enregistré : le comité doit maintenant valider la carte.",
   );
+  if (etat.ok && photo.url) await retirerAnciennePhoto("encadrants", id, avant?.photo_url, photo.url);
+  return etat;
 }
 
 /** Carte validée (ou fiche du président) : la modification attend l'accord du comité. */

@@ -15,19 +15,24 @@ const TOURNOI_PAR_DEFAUT: Tournoi = {
 
 // Tant que Supabase n'est pas branché, le site s'affiche avec des listes vides
 // au lieu de planter : utile pour le premier déploiement.
+// Si la base ne répond pas, on lève une erreur plutôt que d'afficher une page vide (« aucun match »,
+// « billetterie fermée ») : le site garde la dernière version en cache, sinon il affiche app/error.tsx.
 async function lire<T>(requete: (db: ReturnType<typeof createPublicClient>) => PromiseLike<{ data: T | null; error: unknown }>, vide: T): Promise<T> {
   if (!supabaseConfigured) return vide;
   const db = createPublicClient();
   const { data, error } = await requete(db);
   if (error) {
     console.error(error);
-    return vide;
+    throw new Error("Base de données indisponible");
   }
   return data ?? vide;
 }
 
 export const getTournoi = () =>
   lire<Tournoi>((db) => db.from("tournoi").select("*").eq("id", 1).single(), TOURNOI_PAR_DEFAUT);
+
+/** Saison imprimée sur les cartes : l'année où commence le tournoi, même si les cartes sont imprimées l'année suivante. */
+export const getSaison = async () => Number.parseInt((await getTournoi()).date_debut.slice(0, 4), 10);
 
 export const getClubs = () =>
   lire<Club[]>((db) => db.from("clubs").select("*").order("poule").order("nom"), []);
