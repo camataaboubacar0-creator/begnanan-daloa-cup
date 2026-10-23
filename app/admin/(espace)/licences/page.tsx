@@ -7,11 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 import { FONCTIONS, type Club, type DemandeClub, type Encadrant, type Joueur, type ModificationClub } from "@/lib/types";
 import { accepterDemande, controlerLicence, enregistrerPresident, refuserDemande, refuserLicence, reglerLicences, traiterModification, validerEncadrant } from "./actions";
 
-const age = (naissance: string) => Math.floor((Date.now() - new Date(naissance).getTime()) / (365.25 * 24 * 3600 * 1000));
+// Les anciennes fiches peuvent avoir une date de naissance ; elle n'est plus demandée.
+const age = (naissance?: string | null) => (naissance ? ` · ${Math.floor((Date.now() - new Date(naissance).getTime()) / (365.25 * 24 * 3600 * 1000))} ans` : "");
 
 const CHAMPS: Record<string, string> = {
   logo_url: "Logo", photo_url: "Photo", couleur: "Couleur", quartier: "Quartier", presentation: "Présentation",
-  nom: "Nom", prenoms: "Prénoms", date_naissance: "Naissance", poste: "Poste", numero_maillot: "Maillot", telephone: "Téléphone",
+  nom: "Nom", prenoms: "Prénoms", poste: "Poste", numero_maillot: "Maillot", telephone: "Téléphone",
 };
 
 /** Valeurs proposées par le club qui diffèrent de la fiche actuelle. */
@@ -107,7 +108,7 @@ export default async function AdminLicences() {
                       <li key={i}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         {j.photo_url ? <img className="vignette" src={j.photo_url} alt="" /> : <span className="vignette" />}
-                        {j.prenoms} {j.nom} · {age(j.date_naissance)} ans{j.poste ? ` · ${j.poste}` : ""}{j.numero_maillot ? ` · n° ${j.numero_maillot}` : ""}
+                        {j.prenoms} {j.nom}{age(j.date_naissance)}{j.poste ? ` · ${j.poste}` : ""}{j.numero_maillot ? ` · n° ${j.numero_maillot}` : ""}
                       </li>
                     ))}
                   </ul>
@@ -170,7 +171,7 @@ export default async function AdminLicences() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {j.photo_url ? <img className="vignette" src={j.photo_url} alt="" /> : <span className="pill bad" style={{ marginRight: 6 }}>Sans photo</span>}
               <b>{j.prenoms} {j.nom}</b>{" "}
-              <span className="small">· {nomClub.get(j.club_id)} · {age(j.date_naissance)} ans{j.poste ? ` · ${j.poste}` : ""}{j.numero_maillot ? ` · n° ${j.numero_maillot}` : ""}</span>
+              <span className="small">· {nomClub.get(j.club_id)}{age(j.date_naissance)}{j.poste ? ` · ${j.poste}` : ""}{j.numero_maillot ? ` · n° ${j.numero_maillot}` : ""}</span>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "6px 0" }}>
                 {j.payante ? <span className="pill warn">Payante{tarif !== null ? ` · ${fcfa(tarif)}` : ""}</span> : <span className="pill ok">Incluse</span>}
                 {j.doublon_possible && <span className="pill bad">Doublon possible : même joueur dans un autre club</span>}

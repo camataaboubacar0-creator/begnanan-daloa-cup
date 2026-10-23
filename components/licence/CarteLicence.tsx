@@ -4,8 +4,10 @@ import { FONCTIONS, type Encadrant, type Joueur } from "@/lib/types";
 const SAISON = new Date().getFullYear();
 
 /**
- * Carte au format carte bancaire (imprimable) : le QR code ouvre la page publique de vérification.
- * Sert aux licences des joueurs et aux cartes de l'encadrement (président, coach, adjoint).
+ * Carte au format carte bancaire (85,6 × 54 mm), en deux faces côte à côte : à l'impression,
+ * on plie au milieu pour avoir le recto (tournoi) et le verso (identité et QR code) dos à dos.
+ * Le QR code ouvre la page publique de vérification. Sert aux licences des joueurs et aux
+ * cartes de l'encadrement (président, coach, adjoint).
  */
 export async function Carte({ numero, nom, prenoms, titre, club, detail, base, photo, logo }: {
   numero: string;
@@ -19,24 +21,42 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
   logo?: string | null;
 }) {
   const lien = `${base}/licence/${numero}`;
-  const qr = await QRCode.toString(lien, { type: "svg", margin: 0, errorCorrectionLevel: "M" });
+  // Marge blanche de 2 modules et correction d'erreur élevée : lisible même imprimé petit ou plastifié.
+  const qr = await QRCode.toString(lien, { type: "svg", margin: 2, errorCorrectionLevel: "Q", color: { dark: "#000000", light: "#ffffff" } });
   const initiales = `${prenoms[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
   return (
-    <div className="licence">
-      <div style={{ display: "flex", gap: 14, alignItems: "center", minWidth: 0 }}>
-        {photo ? <img className="photo" src={photo} alt={`${prenoms} ${nom}`} /> : <div className="photo" aria-hidden="true">{initiales}</div>}
-        <div style={{ minWidth: 0 }}>
-          <div className="lic-t">BÊGNANAN DALOA CUP · {SAISON}</div>
-          <div className="lic-f">{titre}</div>
-          <b className="lic-n">{prenoms} {nom}</b>
-          <div className="small lic-club" style={{ opacity: 0.85 }}>
-            {logo && <img src={logo} alt="" />}
-            {club}{detail ? ` · ${detail}` : ""}
-          </div>
-          <div className="no">{numero}</div>
+    <div className="carte">
+      <div className="face recto">
+        <img className="recto-logo" src="/logo.webp" alt="" />
+        <div className="recto-nom">Bêgnanan Daloa Cup</div>
+        <div className="recto-saison">Saison {SAISON} · Daloa</div>
+        <div className="recto-type">{titre}</div>
+        <div className="recto-club">
+          {logo && <img src={logo} alt="" />}
+          <span>{club}</span>
         </div>
       </div>
-      <a className="qr" href={lien} aria-label={`Vérifier la carte ${numero}`} dangerouslySetInnerHTML={{ __html: qr }} />
+      <div className="face verso">
+        <div className="verso-tete">
+          <img src="/logo-small.webp" alt="" />
+          <span>Bêgnanan Daloa Cup · {SAISON}</span>
+          <b>{titre}</b>
+        </div>
+        <div className="verso-corps">
+          {photo ? <img className="verso-photo" src={photo} alt={`${prenoms} ${nom}`} /> : <div className="verso-photo vide" aria-hidden="true">{initiales}</div>}
+          <div className="verso-infos">
+            <b className="verso-nom">{prenoms} {nom}</b>
+            <span className="verso-club">
+              {logo && <img src={logo} alt="" />}
+              {club}
+            </span>
+            {detail && <span className="verso-detail">{detail}</span>}
+            <span className="verso-numero">{numero}</span>
+          </div>
+          <a className="verso-qr" href={lien} aria-label={`Vérifier la carte ${numero}`} dangerouslySetInnerHTML={{ __html: qr }} />
+        </div>
+        <div className="verso-pied">Scannez le QR code pour vérifier cette carte</div>
+      </div>
     </div>
   );
 }

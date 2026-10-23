@@ -44,15 +44,14 @@ export async function deposerDemande(_: EtatDemande, f: FormData): Promise<EtatD
       return {
         nom: champ(f, `j${k}_nom`, 60),
         prenoms: champ(f, `j${k}_prenoms`, 80),
-        date_naissance: champ(f, `j${k}_naissance`, 10),
         poste: champ(f, `j${k}_poste`, 30) || null,
         numero_maillot: numero >= 1 && numero <= 99 ? numero : null,
         photo: fichierPhoto(f, `j${k}_photo`),
       };
     })
-    .filter((j) => j.nom || j.prenoms || j.date_naissance);
-  const incomplet = joueurs.findIndex((j) => !j.nom || !j.prenoms || !/^\d{4}-\d{2}-\d{2}$/.test(j.date_naissance));
-  if (incomplet >= 0) return { erreur: `Joueur ${incomplet + 1} : nom, prénoms et date de naissance sont obligatoires (ou retirez la ligne).` };
+    .filter((j) => j.nom || j.prenoms);
+  const incomplet = joueurs.findIndex((j) => !j.nom || !j.prenoms);
+  if (incomplet >= 0) return { erreur: `Joueur ${incomplet + 1} : indiquez le nom et les prénoms (ou retirez la ligne).` };
 
   const photos = [fichierPhoto(f, "logo"), fichierPhoto(f, "president_photo"), ...encadrement.map((e) => e.photo), ...joueurs.map((j) => j.photo)];
   const erreurPhoto = photos.map(photoInvalide).find(Boolean);

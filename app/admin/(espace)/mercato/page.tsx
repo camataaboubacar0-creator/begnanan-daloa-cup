@@ -49,7 +49,7 @@ export default async function Mercato() {
           {REGLES}
           {ouvert ? (
             <Formulaire action={demanderTransfert} bouton="Demander le transfert">
-              <label className="field">Numéro de licence du joueur<input name="numero" required placeholder="BDC-26-0001" maxLength={20} /></label>
+              <label className="field">Numéro de licence ou nom du joueur<input name="numero" required placeholder="BDC-26-0001 ou Issa Bamba" maxLength={80} /></label>
               <label className="field">Montant proposé (FCFA, facultatif)<input name="montant" type="number" min={0} step={500} /></label>
             </Formulaire>
           ) : (

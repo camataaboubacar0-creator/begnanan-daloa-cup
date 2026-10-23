@@ -21,7 +21,6 @@ function ChampsJoueur({ j, demander }: { j?: Joueur; demander?: boolean }) {
     <>
       <label className="field">Nom<input name="nom" defaultValue={j?.nom} required maxLength={60} /></label>
       <label className="field">Prénoms<input name="prenoms" defaultValue={j?.prenoms} required maxLength={80} /></label>
-      <label className="field">Date de naissance<input name="date_naissance" type="date" defaultValue={j?.date_naissance} required /></label>
       <label className="field">Poste
         <select name="poste" defaultValue={j?.poste ?? ""}>
           <option value="">—</option>

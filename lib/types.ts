@@ -105,7 +105,7 @@ export interface Joueur {
   club_id: string;
   nom: string;
   prenoms: string;
-  date_naissance: string;
+  date_naissance: string | null;
   poste: string | null;
   numero_maillot: number | null;
   etat: EtatLicence;
@@ -137,7 +137,7 @@ export interface DemandeClub {
   logo_url?: string | null;
   president_photo_url?: string | null;
   encadrement?: { fonction: "coach" | "adjoint"; nom: string; prenoms: string; telephone: string | null; photo_url: string | null }[];
-  joueurs?: { nom: string; prenoms: string; date_naissance: string; poste: string | null; numero_maillot: number | null; photo_url: string | null }[];
+  joueurs?: { nom: string; prenoms: string; date_naissance?: string | null; poste: string | null; numero_maillot: number | null; photo_url: string | null }[];
 }
 
 export interface MessageClub {
