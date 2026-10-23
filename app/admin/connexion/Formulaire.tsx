@@ -12,6 +12,7 @@ export function Formulaire({ suite }: { suite: string }) {
       <label className="field">Mot de passe<input name="motdepasse" type="password" required autoComplete="current-password" /></label>
       {etat.erreur && <p className="form-err">{etat.erreur}</p>}
       <button className="btn primary" disabled={envoi}>{envoi ? "Connexion…" : "Se connecter"}</button>
+      <p className="small">Mot de passe oublié ? Contactez le comité : il vous remet un mot de passe provisoire.</p>
     </form>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-const COTE_MAX = 600;
+// 480 px suffisent pour la carte (photo d'environ 2 cm) et gardent chaque photo autour de 40 Ko.
+const COTE_MAX = 480;
 
 /** Réduit une photo de téléphone (souvent 3 à 5 Mo) à quelques dizaines de Ko avant l'envoi. */
 async function reduire(fichier: File): Promise<File> {
@@ -13,7 +14,7 @@ async function reduire(fichier: File): Promise<File> {
   canvas.width = Math.round(image.width * echelle);
   canvas.height = Math.round(image.height * echelle);
   canvas.getContext("2d")!.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/jpeg", 0.82));
+  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/jpeg", 0.8));
   return blob ? new File([blob], fichier.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : fichier;
 }
 

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceClient } from "./supabase/server";
 
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -33,4 +34,21 @@ export async function deposerPhoto(db: SupabaseClient, dossier: string, fichier:
     throw new Error("Envoi de la photo impossible. Réessayez.");
   }
   return db.storage.from("photos").getPublicUrl(chemin).data.publicUrl;
+}
+
+const PREFIXE = "/storage/v1/object/public/photos/";
+
+/**
+ * Supprime du stockage des photos qui ne servent plus (photo remplacée, demande d'inscription
+ * échouée), pour ne pas remplir le stockage. Un échec n'empêche rien : la photo reste, c'est tout.
+ */
+export async function retirerPhotos(urls: (string | null | undefined)[]) {
+  const chemins = urls.flatMap((u) => (u && u.includes(PREFIXE) ? [decodeURIComponent(u.split(PREFIXE)[1])] : []));
+  if (!chemins.length) return;
+  try {
+    const { error } = await createServiceClient().storage.from("photos").remove(chemins);
+    if (error) console.error(error);
+  } catch (e) {
+    console.error(e);
+  }
 }

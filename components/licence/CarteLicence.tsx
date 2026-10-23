@@ -1,15 +1,13 @@
 import QRCode from "qrcode";
 import { FONCTIONS, type Encadrant, type Joueur } from "@/lib/types";
 
-const SAISON = new Date().getFullYear();
-
 /**
  * Carte au format carte bancaire (85,6 × 54 mm), en deux faces côte à côte : à l'impression,
  * on plie au milieu pour avoir le recto (tournoi) et le verso (identité et QR code) dos à dos.
  * Le QR code ouvre la page publique de vérification. Sert aux licences des joueurs et aux
  * cartes de l'encadrement (président, coach, adjoint).
  */
-export async function Carte({ numero, nom, prenoms, titre, club, detail, base, photo, logo }: {
+export async function Carte({ numero, nom, prenoms, titre, club, detail, base, photo, logo, saison }: {
   numero: string;
   nom: string;
   prenoms: string;
@@ -19,6 +17,7 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
   base: string;
   photo?: string | null;
   logo?: string | null;
+  saison: number;
 }) {
   const lien = `${base}/licence/${numero}`;
   // Marge blanche de 2 modules et correction d'erreur élevée : lisible même imprimé petit ou plastifié.
@@ -29,7 +28,7 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
       <div className="face recto">
         <img className="recto-logo" src="/logo.webp" alt="" />
         <div className="recto-nom">Bêgnanan Daloa Cup</div>
-        <div className="recto-saison">Saison {SAISON} · Daloa</div>
+        <div className="recto-saison">Saison {saison} · Daloa</div>
         <div className="recto-type">{titre}</div>
         <div className="recto-club">
           {logo && <img src={logo} alt="" />}
@@ -39,7 +38,7 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
       <div className="face verso">
         <div className="verso-tete">
           <img src="/logo-small.webp" alt="" />
-          <span>Bêgnanan Daloa Cup · {SAISON}</span>
+          <span>Bêgnanan Daloa Cup · {saison}</span>
           <b>{titre}</b>
         </div>
         <div className="verso-corps">
@@ -61,11 +60,13 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
   );
 }
 
-export function CarteLicence({ joueur, club, logo, base }: { joueur: Joueur; club: string; logo?: string | null; base: string }) {
+type Commun = { club: string; logo?: string | null; base: string; saison: number };
+
+export function CarteLicence({ joueur, ...commun }: Commun & { joueur: Joueur }) {
   const detail = [joueur.poste, joueur.numero_maillot ? `n° ${joueur.numero_maillot}` : ""].filter(Boolean).join(" · ");
-  return <Carte numero={joueur.numero_licence!} nom={joueur.nom} prenoms={joueur.prenoms} titre="Licence joueur" club={club} detail={detail} base={base} photo={joueur.photo_url} logo={logo} />;
+  return <Carte numero={joueur.numero_licence!} nom={joueur.nom} prenoms={joueur.prenoms} titre="Licence joueur" detail={detail} photo={joueur.photo_url} {...commun} />;
 }
 
-export function CarteEncadrant({ encadrant, club, logo, base }: { encadrant: Encadrant; club: string; logo?: string | null; base: string }) {
-  return <Carte numero={encadrant.numero_carte!} nom={encadrant.nom} prenoms={encadrant.prenoms} titre={FONCTIONS[encadrant.fonction]} club={club} base={base} photo={encadrant.photo_url} logo={logo} />;
+export function CarteEncadrant({ encadrant, ...commun }: Commun & { encadrant: Encadrant }) {
+  return <Carte numero={encadrant.numero_carte!} nom={encadrant.nom} prenoms={encadrant.prenoms} titre={FONCTIONS[encadrant.fonction]} photo={encadrant.photo_url} {...commun} />;
 }

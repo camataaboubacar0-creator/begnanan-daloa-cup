@@ -3,7 +3,20 @@ import { exigerAcces } from "@/lib/auth";
 import { identifiantAffiche } from "@/lib/identifiant";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ROLES, ROLES_ORGANISATEURS, type Role } from "@/lib/types";
-import { creerCompte, modifierCompte } from "./actions";
+import { creerCompte, modifierCompte, nouveauMotDePasse } from "./actions";
+
+/** Mot de passe oublié : l'administrateur en fixe un provisoire. */
+function MotDePasseProvisoire({ id }: { id: string }) {
+  return (
+    <details className="small" style={{ marginTop: 8 }}>
+      <summary>Mot de passe oublié ?</summary>
+      <Formulaire action={nouveauMotDePasse} bouton="Enregistrer le nouveau mot de passe" className="form-row">
+        <input type="hidden" name="id" value={id} />
+        <label className="field">Mot de passe provisoire<input name="motdepasse" type="text" minLength={10} required autoComplete="off" /></label>
+      </Formulaire>
+    </details>
+  );
+}
 
 function ChoixRole({ valeur }: { valeur?: Role }) {
   return (
@@ -18,11 +31,17 @@ function ChoixRole({ valeur }: { valeur?: Role }) {
 export default async function AdminComptes() {
   await exigerAcces("comptes");
   let profils: { user_id: string; nom: string; role: Role; actif: boolean }[] = [];
+  let presidents: { user_id: string; nom: string; actif: boolean; clubs: { nom: string } | null }[] = [];
   let emails = new Map<string, string>();
   try {
     const admin = createServiceClient();
-    const [p, u] = await Promise.all([admin.from("profils").select("*").order("nom"), admin.auth.admin.listUsers({ perPage: 200 })]);
+    const [p, pr, u] = await Promise.all([
+      admin.from("profils").select("*").order("nom"),
+      admin.from("presidents").select("user_id, nom, actif, clubs(nom)").order("nom"),
+      admin.auth.admin.listUsers({ perPage: 200 }),
+    ]);
     profils = p.data ?? [];
+    presidents = (pr.data ?? []) as unknown as typeof presidents;
     emails = new Map((u.data?.users ?? []).map((x) => [x.id, identifiantAffiche(x.email ?? "")]));
   } catch {
     return <div className="card"><p>La clé de service Supabase n&apos;est pas configurée : voir le guide d&apos;installation.</p></div>;
@@ -60,6 +79,20 @@ export default async function AdminComptes() {
                 <ChoixRole valeur={p.role} />
                 <label className="chk"><input name="actif" type="checkbox" defaultChecked={p.actif} /> Actif</label>
               </Formulaire>
+              <MotDePasseProvisoire id={p.user_id} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card">
+        <h3 style={{ marginBottom: 6 }}>Présidents de club ({presidents.length})</h3>
+        <p className="small" style={{ marginBottom: 12 }}>Un président qui a oublié son mot de passe : fixez-en un provisoire et remettez-le-lui en main propre.</p>
+        {!presidents.length && <p className="small">Aucun président pour l&apos;instant.</p>}
+        <div className="adm-list">
+          {presidents.map((p) => (
+            <div key={p.user_id} className="adm-item">
+              <b>{p.nom}</b> <span className="small">{p.clubs?.nom} · {emails.get(p.user_id)}{p.actif ? "" : " · désactivé"}</span>
+              <MotDePasseProvisoire id={p.user_id} />
             </div>
           ))}
         </div>

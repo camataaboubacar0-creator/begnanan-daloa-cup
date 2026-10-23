@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSaison } from "@/lib/data";
 import { createPublicClient, supabaseConfigured } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
     const { data } = await createPublicClient().rpc("verifier_carte", { p_numero: decodeURIComponent(numero) });
     licence = (data as Licence[] | null)?.[0] ?? null;
   }
+  const saison = await getSaison();
   // Cartes de l'encadrement (président, coach, adjoint) : numéros en BDC-AA-E…
   const encadrement = /^BDC-\d{2}-E/i.test(decodeURIComponent(numero));
   return (
@@ -32,7 +34,7 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
               {licence.photo_url && <img className="verif-photo" src={licence.photo_url} alt={`${licence.prenoms} ${licence.nom}`} />}
               <h2 style={{ fontSize: "1.6rem" }}>{licence.prenoms} {licence.nom}</h2>
               <p className="lic-club">{licence.logo_url && <img src={licence.logo_url} alt="" />}{licence.club}{licence.poste ? ` · ${licence.poste}` : ""}</p>
-              <p className="small mono">{licence.numero} · saison {new Date().getFullYear()}</p>
+              <p className="small mono">{licence.numero} · saison {saison}</p>
               {!licence.active && (
                 <p className="small">
                   {encadrement ? "Cette personne n'est pas autorisée sur le banc tant que le comité n'a pas validé sa carte." : "Ce joueur ne peut pas être aligné tant que le comité n'a pas réactivé sa licence."}

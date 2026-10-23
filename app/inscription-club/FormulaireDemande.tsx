@@ -6,6 +6,17 @@ import { deposerDemande, type EtatDemande } from "./actions";
 
 const POSTES = ["Gardien", "Défenseur", "Milieu", "Attaquant"];
 
+// Le serveur refuse un envoi de plus de 4 Mo : on prévient avant plutôt qu'après un long envoi.
+const ENVOI_MAX = 3.5 * 1024 * 1024;
+
+/** Message si les photos jointes dépassent ce qu'un seul envoi peut transporter, sinon null. */
+function photosTropLourdes(form: HTMLFormElement) {
+  const total = [...form.querySelectorAll<HTMLInputElement>("input[type=file]")].reduce((s, i) => s + (i.files?.[0]?.size ?? 0), 0);
+  return total > ENVOI_MAX
+    ? "Trop de photos pour un seul envoi. Envoyez la demande avec moins de photos de joueurs : vous ajouterez les autres depuis l'espace de votre club."
+    : null;
+}
+
 function Encadrant({ cle, titre }: { cle: "coach" | "adjoint"; titre: string }) {
   return (
     <fieldset className="bloc-form">
@@ -25,6 +36,7 @@ export function FormulaireDemande() {
   // Clés stables des lignes de joueurs (ajout et retrait sans perdre la saisie des autres).
   const [joueurs, setJoueurs] = useState<number[]>([]);
   const [suivant, setSuivant] = useState(0);
+  const [tropLourd, setTropLourd] = useState<string | null>(null);
 
   if (etat.ok)
     return (
@@ -38,7 +50,15 @@ export function FormulaireDemande() {
     );
 
   return (
-    <form action={action} className="form-inscription">
+    <form
+      action={action}
+      className="form-inscription"
+      onSubmit={(e) => {
+        const erreur = photosTropLourdes(e.currentTarget);
+        setTropLourd(erreur);
+        if (erreur) e.preventDefault();
+      }}
+    >
       <fieldset className="bloc-form">
         <legend>1. Le club</legend>
         <div className="form-grid">
@@ -115,7 +135,7 @@ export function FormulaireDemande() {
       </details>
 
       <label className="field full">Message pour le comité (facultatif)<textarea name="message" rows={3} maxLength={500} /></label>
-      {etat.erreur && <p className="form-err full">{etat.erreur}</p>}
+      {(tropLourd ?? etat.erreur) && <p className="form-err full">{tropLourd ?? etat.erreur}</p>}
       <div className="form-actions"><button className="btn primary" disabled={envoi}>{envoi ? "Envoi des informations et des photos…" : "Envoyer la demande"}</button></div>
     </form>
   );

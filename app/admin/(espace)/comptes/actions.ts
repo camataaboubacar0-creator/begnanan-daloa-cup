@@ -49,3 +49,26 @@ export async function modifierCompte(_: Etat, f: FormData): Promise<Etat> {
   revalidatePath("/admin/comptes");
   return { ok: "Enregistré." };
 }
+
+/**
+ * Mot de passe oublié : l'administrateur fixe un mot de passe provisoire, à remettre en main propre.
+ * Seulement pour un organisateur ou un président de club, jamais pour un autre compte.
+ */
+export async function nouveauMotDePasse(_: Etat, f: FormData): Promise<Etat> {
+  await exigerAcces("comptes");
+  const id = texte(f, "id");
+  const mdp = texte(f, "motdepasse");
+  if (mdp.length < 10) return { erreur: "Mot de passe provisoire : 10 caractères minimum." };
+  const admin = createServiceClient();
+  const [{ data: profil }, { data: president }] = await Promise.all([
+    admin.from("profils").select("user_id").eq("user_id", id).maybeSingle(),
+    admin.from("presidents").select("user_id").eq("user_id", id).maybeSingle(),
+  ]);
+  if (!profil && !president) return { erreur: "Compte introuvable." };
+  const { error } = await admin.auth.admin.updateUserById(id, { password: mdp });
+  if (error) {
+    console.error(error);
+    return { erreur: "Modification impossible. Réessayez." };
+  }
+  return { ok: "Nouveau mot de passe enregistré. Remettez-le en main propre : il le changera après connexion." };
+}
