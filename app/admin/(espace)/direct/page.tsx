@@ -4,11 +4,9 @@ import { StatutPill } from "@/components/StatutMatch";
 import { exigerAcces } from "@/lib/auth";
 import { heure, jourCourt } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { Club, EvenementMatch, Match } from "@/lib/types";
+import { EVENEMENTS, type Club, type EvenementMatch, type Match } from "@/lib/types";
 import { changerStatut, retirerEvenement } from "./actions";
 import { SaisieEquipe } from "./Saisie";
-
-const LIBELLES = { but: "⚽ But", csc: "⚽ But contre son camp", jaune: "🟨 Carton jaune", rouge: "🟥 Carton rouge" };
 
 /** Match en direct : buts et cartons saisis depuis le téléphone, score mis à jour sur le site. */
 export default async function Direct({ searchParams }: { searchParams: Promise<{ match?: string }> }) {
@@ -96,7 +94,7 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
           {evenements.map((x) => (
             <div key={x.id} className="adm-item direct-ligne">
               <span className="num">{x.minute !== null ? `${x.minute}'` : "–"}</span>
-              <span>{LIBELLES[x.type]} · <b>{x.joueur_nom ?? "joueur non précisé"}</b> <span className="small">({x.type === "csc" ? `compté pour ${nom(x.club_id)}` : nom(x.club_id)})</span></span>
+              <span>{EVENEMENTS[x.type].icone} {EVENEMENTS[x.type].libelle} · <b>{x.joueur_nom ?? "joueur non précisé"}</b> <span className="small">({x.type === "csc" ? `compté pour ${nom(x.club_id)}` : nom(x.club_id)})</span></span>
               <Formulaire action={retirerEvenement} bouton="Annuler" className="form-row" confirmer="Annuler cette saisie ?">
                 <input type="hidden" name="id" value={x.id} />
               </Formulaire>

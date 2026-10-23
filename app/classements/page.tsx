@@ -137,7 +137,7 @@ export default async function Classements() {
                 {sanctions.length ? (
                   <div className="tbl-wrap">
                     <table>
-                      <thead><tr><th>Joueur</th><th className="n">🟨</th><th className="n">🟥</th></tr></thead>
+                      <thead><tr><th>Joueur</th><th className="n">2 min</th><th className="n">5 min</th></tr></thead>
                       <tbody>
                         {sanctions.map((b) => (
                           <tr key={b.joueur_nom + b.club_id}>

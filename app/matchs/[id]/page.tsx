@@ -5,12 +5,11 @@ import { Crest } from "@/components/Crest";
 import { StatutPill } from "@/components/StatutMatch";
 import { getClubs, getEvenements, getMatchs, parId } from "@/lib/data";
 import { heure, jourCourt, lienWhatsApp } from "@/lib/format";
+import { EVENEMENTS } from "@/lib/types";
 import { Actualisation } from "./Actualisation";
 
 export const revalidate = 15;
 
-const LIBELLES = { but: "But", csc: "But contre son camp", jaune: "Carton jaune", rouge: "Carton rouge" };
-const ICONES = { but: "⚽", csc: "⚽", jaune: "🟨", rouge: "🟥" };
 
 async function charger(id: string) {
   const [matchs, clubs] = await Promise.all([getMatchs(), getClubs()]);
@@ -61,7 +60,7 @@ export default async function PageMatch({ params }: { params: Promise<{ id: stri
               {evenements.map((e) => (
                 <li key={e.id} className={e.club_id === match.club_domicile ? "dom" : "ext"}>
                   <span className="num">{e.minute !== null ? `${e.minute}'` : ""}</span>
-                  <span>{ICONES[e.type]} {LIBELLES[e.type]}{e.joueur_nom ? ` · ${e.joueur_nom}` : ""}</span>
+                  <span>{EVENEMENTS[e.type].icone} {EVENEMENTS[e.type].libelle}{e.joueur_nom ? ` · ${e.joueur_nom}` : ""}</span>
                   <span className="small">{clubs.get(e.club_id)?.sigle}</span>
                 </li>
               ))}

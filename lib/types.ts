@@ -42,7 +42,17 @@ export interface Match {
   resultat_valide: boolean;
 }
 
+// Le tournoi a deux cartons : exclusion de 2 minutes et exclusion de 5 minutes. Dans la base,
+// ils gardent les codes « jaune » (2 min) et « rouge » (5 min).
 export type TypeEvenement = "but" | "csc" | "jaune" | "rouge";
+
+/** Libellé et icône de chaque événement de match. */
+export const EVENEMENTS: Record<TypeEvenement, { libelle: string; icone: string }> = {
+  but: { libelle: "But", icone: "⚽" },
+  csc: { libelle: "But contre son camp", icone: "⚽" },
+  jaune: { libelle: "Carton 2 minutes", icone: "⏱️" },
+  rouge: { libelle: "Carton 5 minutes", icone: "⛔" },
+};
 
 /** But ou carton saisi pendant un match ; club_id = équipe à qui il est compté. */
 export interface EvenementMatch {
@@ -60,7 +70,9 @@ export interface Buteur {
   joueur_nom: string;
   club_id: string;
   buts: number;
+  /** Cartons 2 minutes. */
   jaunes: number;
+  /** Cartons 5 minutes. */
   rouges: number;
 }
 
