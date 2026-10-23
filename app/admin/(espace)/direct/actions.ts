@@ -3,6 +3,7 @@
 import { ecrire, entier, texte, type Etat } from "@/lib/admin";
 import { exigerAcces } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { EVENEMENTS, type TypeEvenement } from "@/lib/types";
 
 // Saisie en direct. Le score du match est recalculé par la base à chaque but ajouté ou retiré.
 
@@ -26,7 +27,7 @@ export async function ajouterEvenement(_: Etat, f: FormData): Promise<Etat> {
   if (!m) return { erreur: "Match introuvable." };
   // Un but contre son camp est compté à l'adversaire de l'équipe du joueur.
   const club = type === "csc" ? (equipe === m.club_domicile ? m.club_exterieur : m.club_domicile) : equipe;
-  const libelle = { but: "But", csc: "But contre son camp", jaune: "Carton jaune", rouge: "Carton rouge" }[type];
+  const libelle = EVENEMENTS[type as TypeEvenement].libelle;
   return ecrire(
     "direct",
     (d) => d.from("evenements_match").insert({ match_id: matchId, club_id: club, type, joueur_id: joueurId, joueur_nom: j ? `${j.prenoms} ${j.nom}` : null, minute }),

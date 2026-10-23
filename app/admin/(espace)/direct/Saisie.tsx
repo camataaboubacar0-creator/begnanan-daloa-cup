@@ -6,8 +6,8 @@ import { ajouterEvenement } from "./actions";
 
 const BOUTONS = [
   ["but", "⚽ But", "primary"],
-  ["jaune", "🟨 Jaune", "line"],
-  ["rouge", "🟥 Rouge", "line"],
+  ["jaune", "⏱️ 2 min", "line"],
+  ["rouge", "⛔ 5 min", "line"],
   ["csc", "Contre son camp", "line"],
 ] as const;
 
