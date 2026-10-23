@@ -13,6 +13,9 @@ export function MatchCard({ match, clubs }: { match: Match; clubs: Map<string, C
   const d = new Date(match.date_heure);
   const part = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("fr-FR", { ...o, timeZone: TZ });
   const titre = `${dom?.nom ?? "?"} – ${ext?.nom ?? "?"}`;
+  // Égalité départagée aux tirs au but : le vainqueur de la séance est mis en avant.
+  const tab = match.tab_domicile != null && match.tab_exterieur != null ? [match.tab_domicile, match.tab_exterieur] : null;
+  const gagne = (a: number | null, b: number | null, ta = 0, tb = 0) => score && ((a ?? 0) > (b ?? 0) || ((a ?? 0) === (b ?? 0) && ta > tb));
   return (
     <article className="card match" id={`match-${match.id}`}>
       <div className="when">
@@ -21,15 +24,15 @@ export function MatchCard({ match, clubs }: { match: Match; clubs: Map<string, C
         <small>{part({ month: "short" })}</small>
       </div>
       <div className="teams">
-        <div className={`trow ${score && (match.buts_domicile ?? 0) > (match.buts_exterieur ?? 0) ? "win" : ""}`}>
+        <div className={`trow ${gagne(match.buts_domicile, match.buts_exterieur, tab?.[0], tab?.[1]) ? "win" : ""}`}>
           <Crest club={dom} />
           <span className="nm">{dom?.nom}</span>
-          <span className="sc num">{score ? match.buts_domicile : ""}</span>
+          <span className="sc num">{score ? match.buts_domicile : ""}{score && tab && <small> ({tab[0]})</small>}</span>
         </div>
-        <div className={`trow ${score && (match.buts_exterieur ?? 0) > (match.buts_domicile ?? 0) ? "win" : ""}`}>
+        <div className={`trow ${gagne(match.buts_exterieur, match.buts_domicile, tab?.[1], tab?.[0]) ? "win" : ""}`}>
           <Crest club={ext} />
           <span className="nm">{ext?.nom}</span>
-          <span className="sc num">{score ? match.buts_exterieur : ""}</span>
+          <span className="sc num">{score ? match.buts_exterieur : ""}{score && tab && <small> ({tab[1]})</small>}</span>
         </div>
       </div>
       <div className="mside">
@@ -38,6 +41,7 @@ export function MatchCard({ match, clubs }: { match: Match; clubs: Map<string, C
           {heure(match.date_heure)} · {match.terrain}
           {match.poule ? ` · Poule ${match.poule}` : ` · ${match.phase}`}
         </span>
+        {tab && <span className="small">Tirs au but entre parenthèses</span>}
         {match.statut === "terminé" && !match.resultat_valide && <span className="small">Résultat provisoire</span>}
         <Link className="small" href={`/matchs/${match.id}`}>{match.statut === "en cours" ? "Suivre en direct" : "Détails du match"}</Link>
         <a className="small" href={lienWhatsApp(`${titre} · BÊGNANAN DALOA CUP`)} target="_blank" rel="noopener">
