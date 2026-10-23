@@ -22,6 +22,8 @@ async function lire<T>(requete: (db: ReturnType<typeof createPublicClient>) => P
   const db = createPublicClient();
   const { data, error } = await requete(db);
   if (error) {
+    // Table pas encore créée (migration en attente) : la fonction correspondante reste vide.
+    if (["PGRST205", "42P01"].includes((error as { code?: string }).code ?? "")) return vide;
     console.error(error);
     throw new Error("Base de données indisponible");
   }
