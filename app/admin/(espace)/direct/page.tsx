@@ -1,21 +1,27 @@
 import Link from "next/link";
 import { Formulaire } from "@/components/admin/Formulaire";
+import { ChronoComite } from "@/components/ChronoMatch";
 import { StatutPill } from "@/components/StatutMatch";
+import { TirsAuBut } from "@/components/TirsAuBut";
 import { exigerAcces } from "@/lib/auth";
+import { bilanTirs, type Durees } from "@/lib/chrono";
 import { heure, jourCourt } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import { EVENEMENTS, type Club, type EvenementMatch, type Match } from "@/lib/types";
-import { changerStatut, retirerEvenement } from "./actions";
-import { SaisieEquipe } from "./Saisie";
+import { EVENEMENTS, type Club, type EvenementMatch, type Match, type TirAuBut, type Tournoi } from "@/lib/types";
+import { changerStatut, reglerTemps, retirerEvenement, retirerTir } from "./actions";
+import { CommandesChrono, SaisieEquipe, SaisieTir } from "./Saisie";
 
-/** Match en direct : buts et cartons saisis depuis le téléphone, score mis à jour sur le site. */
+/** Match en direct : chrono, buts, cartons et tirs au but saisis depuis le téléphone, score mis à jour sur le site. */
 export default async function Direct({ searchParams }: { searchParams: Promise<{ match?: string }> }) {
   await exigerAcces("direct");
   const db = await createClient();
-  const [{ data: m }, { data: c }] = await Promise.all([
+  const [{ data: m }, { data: c }, { data: t }] = await Promise.all([
     db.from("matchs").select("*").in("statut", ["programmé", "en cours", "terminé"]).eq("resultat_valide", false).order("date_heure"),
     db.from("clubs").select("id, nom"),
+    db.from("tournoi").select("*").eq("id", 1).single<Tournoi>(),
   ]);
+  const durees: Durees = { mi_temps: t?.duree_mi_temps ?? null, prolongation: t?.duree_prolongation ?? null };
+  const tireurs = t?.tab_tireurs ?? 3;
   const matchs = (m ?? []) as Match[];
   const clubs = new Map(((c ?? []) as Pick<Club, "id" | "nom">[]).map((x) => [x.id, x]));
   const nom = (id: string) => clubs.get(id)?.nom ?? "?";
@@ -31,10 +37,16 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
     );
   }
 
-  const [{ data: e }, { data: j }] = await Promise.all([
+  const [{ data: e }, { data: j }, { data: tab }] = await Promise.all([
     db.from("evenements_match").select("*").eq("match_id", match.id).order("minute", { nullsFirst: false }).order("cree_le"),
     db.from("joueurs").select("id, nom, prenoms, numero_maillot, club_id").in("club_id", [match.club_domicile, match.club_exterieur]).eq("etat", "active").order("nom"),
+    db.from("tirs_au_but").select("*").eq("match_id", match.id).order("ordre"),
   ]);
+  const tirs = (tab ?? []) as TirAuBut[];
+  const seance = match.periode === "tab" && match.statut === "en cours";
+  const bilan = bilanTirs(tirs, match.club_domicile, match.club_exterieur, tireurs);
+  const aSonTour = (club: string) => !bilan.vainqueur && (bilan.prochain === null || bilan.prochain === club);
+  const equipes = [match.club_domicile, match.club_exterieur].map((id) => ({ id, nom: nom(id) }));
   const evenements = (e ?? []) as EvenementMatch[];
   const joueurs = (j ?? []) as { id: string; nom: string; prenoms: string; numero_maillot: number | null; club_id: string }[];
   const liste = (club: string) =>
@@ -62,6 +74,9 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
           <b className="num">{match.buts_domicile ?? 0} – {match.buts_exterieur ?? 0}</b>
           <span>{nom(match.club_exterieur)}</span>
         </div>
+        {match.tab_domicile != null && <span className="small">Tirs au but : <b className="num">{match.tab_domicile} – {match.tab_exterieur}</b></span>}
+        {match.statut === "en cours" && <ChronoComite chrono={match} durees={durees} />}
+        {match.statut === "en cours" && match.periode && <CommandesChrono key={`${match.periode}-${match.periode_terminee}-${match.chrono_lance}`} matchId={match.id} chrono={match} />}
         <div className="form-row" style={{ justifyContent: "center" }}>
           {match.statut === "programmé" && (
             <Formulaire action={changerStatut} bouton="Coup d'envoi" className="form-row">
@@ -70,7 +85,7 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
             </Formulaire>
           )}
           {match.statut === "en cours" && (
-            <Formulaire action={changerStatut} bouton="Fin du match" className="form-row" confirmer="Terminer le match ?">
+            <Formulaire action={changerStatut} bouton="Fin du match" className="form-row" confirmer={seance && !bilan.vainqueur ? "La séance de tirs au but n'a pas de vainqueur. Terminer quand même le match ?" : "Terminer le match ?"}>
               <input type="hidden" name="match_id" value={match.id} />
               <input type="hidden" name="statut" value="terminé" />
             </Formulaire>
@@ -82,9 +97,32 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
         </p>
       </div>
 
+      {(seance || tirs.length > 0) && (
+        <div className="card">
+          <h3 style={{ marginBottom: 10 }}>Tirs au but</h3>
+          <TirsAuBut tirs={tirs} equipes={equipes} tireurs={tireurs} />
+          {tirs.length > 0 && (
+            <div className="adm-list" style={{ marginTop: 10 }}>
+              {[...tirs].reverse().map((x, i) => (
+                <div key={x.id} className="adm-item direct-ligne">
+                  <span className="num">{x.ordre}</span>
+                  <span>{x.reussi ? "✅ Marqué" : "❌ Manqué"} · <b>{x.joueur_nom ?? "tireur non précisé"}</b> <span className="small">({nom(x.club_id)})</span></span>
+                  {i === 0 && (
+                    <Formulaire action={retirerTir} bouton="Annuler" className="form-row" confirmer="Annuler ce tir ?">
+                      <input type="hidden" name="id" value={x.id} />
+                    </Formulaire>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="direct-equipes">
-        <SaisieEquipe matchId={match.id} club={{ id: match.club_domicile, nom: nom(match.club_domicile) }} joueurs={liste(match.club_domicile)} />
-        <SaisieEquipe matchId={match.id} club={{ id: match.club_exterieur, nom: nom(match.club_exterieur) }} joueurs={liste(match.club_exterieur)} />
+        {seance
+          ? equipes.map((e) => <SaisieTir key={e.id} matchId={match.id} club={e} joueurs={liste(e.id)} aSonTour={aSonTour(e.id)} />)
+          : equipes.map((e) => <SaisieEquipe key={e.id} matchId={match.id} club={e} joueurs={liste(e.id)} />)}
       </div>
 
       <div className="card">
@@ -102,6 +140,16 @@ export default async function Direct({ searchParams }: { searchParams: Promise<{
           ))}
         </div>
       </div>
+
+      <details className="card">
+        <summary><b>Temps de jeu</b> <span className="small">{durees.mi_temps ? `mi-temps de ${durees.mi_temps} min` : "durée des mi-temps à confirmer"}{durees.prolongation ? `, prolongations de ${durees.prolongation} min` : ""} · {tireurs} tireurs aux tirs au but</span></summary>
+        <Formulaire action={reglerTemps}>
+          <label className="field">Durée d&apos;une mi-temps (minutes)<input name="duree_mi_temps" type="number" min={1} max={60} defaultValue={durees.mi_temps ?? ""} /></label>
+          <label className="field">Durée d&apos;une prolongation (minutes)<input name="duree_prolongation" type="number" min={1} max={30} defaultValue={durees.prolongation ?? ""} /></label>
+          <label className="field">Tireurs par équipe aux tirs au but<input name="tab_tireurs" type="number" min={1} max={11} defaultValue={tireurs} /></label>
+        </Formulaire>
+        <p className="small" style={{ marginTop: 8 }}>Après ces tirs, en cas d&apos;égalité : un tireur par équipe jusqu&apos;à ce qu&apos;une équipe prenne l&apos;avantage.</p>
+      </details>
     </>
   );
 }

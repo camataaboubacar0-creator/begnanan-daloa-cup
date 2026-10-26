@@ -1,6 +1,6 @@
 import "server-only";
 import { createPublicClient, supabaseConfigured } from "./supabase/server";
-import type { Alerte, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, Tournoi } from "./types";
+import type { Alerte, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, TirAuBut, Tournoi } from "./types";
 
 const TOURNOI_PAR_DEFAUT: Tournoi = {
   nom: "BÊGNANAN DALOA CUP",
@@ -77,6 +77,9 @@ export const getEvenements = (matchId: string) =>
     (db) => db.from("evenements_match").select("*").eq("match_id", matchId).order("minute", { nullsFirst: false }).order("cree_le"),
     [],
   );
+
+export const getTirsAuBut = (matchId: string) =>
+  lire<TirAuBut[]>((db) => db.from("tirs_au_but").select("*").eq("match_id", matchId).order("ordre"), []);
 
 /** Buteurs et cartons du tournoi (vue « buteurs »). */
 export const getButeurs = () => lire<Buteur[]>((db) => db.from("buteurs").select("*"), []);
