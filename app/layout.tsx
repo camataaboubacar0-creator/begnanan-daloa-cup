@@ -3,12 +3,10 @@ import { Apparitions } from "@/components/Apparitions";
 import { Analytics } from "@vercel/analytics/next";
 import { Header, TabBar } from "@/components/Navigation";
 import { EnregistrementHorsLigne } from "@/components/HorsLigne";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
-const DESCRIPTION = "Tournoi de maracana à Daloa : billetterie, matchs, résultats, classements et médias.";
-
-// Adresse de production : liens absolus des aperçus de partage (WhatsApp, Facebook) et du plan du site.
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "begnanan-daloa-cup.vercel.app"}`;
+const DESCRIPTION = "Bêgnanan Daloa Cup, le tournoi de maracana de Daloa (Côte d'Ivoire) : billetterie, matchs en direct, résultats, classements et médias.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -20,6 +18,8 @@ export const metadata: Metadata = {
   // Image de partage : app/opengraph-image.jpg (1200 × 630, moins de 300 Ko pour WhatsApp).
   openGraph: { type: "website", locale: "fr_FR", siteName: "BÊGNANAN DALOA CUP", description: DESCRIPTION },
   twitter: { card: "summary_large_image" },
+  // Code de vérification Google Search Console (variable Vercel GOOGLE_SITE_VERIFICATION).
+  verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0e6a26" };

@@ -6,6 +6,7 @@ import { Crest } from "@/components/Crest";
 import { MatchCard } from "@/components/MatchCard";
 import { Hero3D } from "@/components/logo3d/Hero3D";
 import { getAlertes, getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
+import { SITE } from "@/lib/site";
 import { dateCourte, dateLongue, heure, jourCourt } from "@/lib/format";
 import { CartePublication } from "./medias/CartePublication";
 
@@ -34,8 +35,25 @@ export default async function Accueil() {
   const recents = matchs.filter((m) => m.statut === "terminé").slice(-3).reverse();
   const carte = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${tournoi.lieu}, Côte d'Ivoire`)}`;
 
+  // Fiche de l'événement pour Google (nom, dates, lieu, organisateur).
+  const evenement = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: tournoi.nom,
+    description: tournoi.accroche,
+    sport: "Maracana",
+    startDate: tournoi.date_debut,
+    endDate: tournoi.date_fin,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: { "@type": "Place", name: tournoi.lieu, address: { "@type": "PostalAddress", addressLocality: "Daloa", addressCountry: "CI" } },
+    image: [`${SITE}/opengraph-image.jpg`, `${SITE}/logo.webp`],
+    organizer: { "@type": "Organization", name: "Comité d'organisation de la BÊGNANAN DALOA CUP", url: SITE },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(evenement).replace(/</g, "\\u003c") }} />
       <Hero3D>
         <div className="wrap">
           <div>

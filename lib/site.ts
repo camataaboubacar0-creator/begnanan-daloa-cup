@@ -12,3 +12,6 @@ export async function adresseDuSite() {
   const h = await headers();
   return `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
 }
+
+/** Adresse de production : liens absolus des aperçus de partage, du plan du site et de la fiche Google. */
+export const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "begnanan-daloa-cup.vercel.app"}`;
