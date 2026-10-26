@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   // Image de partage : app/opengraph-image.jpg (1200 × 630, moins de 300 Ko pour WhatsApp).
   openGraph: { type: "website", locale: "fr_FR", siteName: "BÊGNANAN DALOA CUP", description: DESCRIPTION },
   twitter: { card: "summary_large_image" },
-  // Code de vérification Google Search Console (variable Vercel GOOGLE_SITE_VERIFICATION).
-  verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
+  // Code de vérification Google Search Console (public, à ne pas retirer : Google le revérifie).
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION ?? "WPV55VXL2QSAfQ4TGUC1bOl19LIQDppuM7XDr_F0zjE" },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0e6a26" };
