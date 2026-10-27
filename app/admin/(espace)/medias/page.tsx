@@ -1,4 +1,5 @@
 import { Formulaire } from "@/components/admin/Formulaire";
+import { ChampPhoto } from "@/components/ChampPhoto";
 import { exigerAcces } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Club, Match, Photo, Publication } from "@/lib/types";
@@ -20,6 +21,14 @@ function ChampsPublication({ p, clubs, matchs }: { p?: Publication; clubs: Club[
           {matchs.map((m) => <option key={m.id} value={m.id}>{m.libelle}</option>)}
         </select>
       </label>
+      <ChampPhoto name="image" label="Image d'aperçu (affichée sur le site)" actuelle={p?.image_url} cote={1200} />
+      {p?.image_url && (
+        <>
+          <input type="hidden" name="image_actuelle" value={p.image_url} />
+          <label className="chk"><input name="sans_image" type="checkbox" /> Retirer l&apos;image</label>
+        </>
+      )}
+      <label className="field">Lien de la publication complète (Facebook, Instagram, TikTok…)<input name="lien_url" type="url" defaultValue={p?.lien_url ?? ""} placeholder="https://" /></label>
       <label className="field">Lien vidéo (YouTube, Facebook…)<input name="video_url" type="url" defaultValue={p?.video_url ?? ""} placeholder="https://" /></label>
       <label className="field">Joueur (homme du match)<input name="joueur" defaultValue={p?.joueur ?? ""} /></label>
       <label className="field">Club du joueur
@@ -77,6 +86,7 @@ export default async function AdminMedias() {
               </Formulaire>
               <Formulaire action={supprimerPublication} className="form-del" bouton="Supprimer" confirmer="Supprimer cette publication ?">
                 <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="image_actuelle" value={p.image_url ?? ""} />
               </Formulaire>
             </details>
           ))}
@@ -86,8 +96,9 @@ export default async function AdminMedias() {
       <div className="card">
         <h3 style={{ marginBottom: 12 }}>Galerie</h3>
         <Formulaire action={ajouterPhoto} bouton="Ajouter la photo">
-          <label className="field">Lien de l&apos;image (https)<input name="image_url" type="url" required /></label>
+          <ChampPhoto name="photo" label="Photo" cote={1600} />
           <label className="field">Légende<input name="legende" /></label>
+          <label className="field">Ou lien d&apos;une image en ligne (https)<input name="image_url" type="url" placeholder="https://" /></label>
         </Formulaire>
         <div className="gal-adm" style={{ marginTop: 16 }}>
           {((photos ?? []) as Photo[]).map((g) => (
@@ -97,6 +108,7 @@ export default async function AdminMedias() {
               <span className="small">{g.legende}</span>
               <Formulaire action={supprimerPhoto} className="form-del" bouton="Retirer" confirmer="Retirer cette photo ?">
                 <input type="hidden" name="id" value={g.id} />
+                <input type="hidden" name="image_actuelle" value={g.image_url ?? ""} />
               </Formulaire>
             </div>
           ))}

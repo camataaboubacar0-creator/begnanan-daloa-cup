@@ -6,10 +6,10 @@ import { useState } from "react";
 const COTE_MAX = 480;
 
 /** Réduit une photo de téléphone (souvent 3 à 5 Mo) à quelques dizaines de Ko avant l'envoi. */
-async function reduire(fichier: File): Promise<File> {
+async function reduire(fichier: File, cote = COTE_MAX): Promise<File> {
   const image = await createImageBitmap(fichier).catch(() => null);
   if (!image) return fichier;
-  const echelle = Math.min(1, COTE_MAX / Math.max(image.width, image.height));
+  const echelle = Math.min(1, cote / Math.max(image.width, image.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(image.width * echelle);
   canvas.height = Math.round(image.height * echelle);
@@ -19,7 +19,7 @@ async function reduire(fichier: File): Promise<File> {
 }
 
 /** Champ photo avec aperçu : la photo est réduite sur le téléphone avant d'être envoyée. */
-export function ChampPhoto({ name, label, actuelle, requis }: { name: string; label: string; actuelle?: string | null; requis?: boolean }) {
+export function ChampPhoto({ name, label, actuelle, requis, cote }: { name: string; label: string; actuelle?: string | null; requis?: boolean; cote?: number }) {
   const [apercu, setApercu] = useState<string | null>(actuelle ?? null);
   const [traitement, setTraitement] = useState(false);
   return (
@@ -42,7 +42,7 @@ export function ChampPhoto({ name, label, actuelle, requis }: { name: string; la
             const f = input.files?.[0];
             if (!f) return setApercu(actuelle ?? null);
             setTraitement(true);
-            const petit = await reduire(f);
+            const petit = await reduire(f, cote);
             try {
               const dt = new DataTransfer();
               dt.items.add(petit);
