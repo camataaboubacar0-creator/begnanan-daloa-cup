@@ -2,10 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Annonces } from "@/components/Annonces";
 import { Countdown } from "@/components/Countdown";
+import { CarteActualite } from "@/components/CarteActualite";
 import { Crest } from "@/components/Crest";
 import { MatchCard } from "@/components/MatchCard";
 import { Hero3D } from "@/components/logo3d/Hero3D";
-import { getAlertes, getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
+import { getActualitesClubs, getAlertes, getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
 import { SITE } from "@/lib/site";
 import { dateCourte, dateLongue, heure, jourCourt } from "@/lib/format";
 import { CartePublication } from "./medias/CartePublication";
@@ -17,7 +18,7 @@ const RUBRIQUES = [
   ["/matchs", "Matchs", "Calendrier, scores en direct et résultats"],
   ["/medias", "Médias", "Débriefs vidéo, annonces, hommes du match, photos"],
   ["/classements", "Classements", "Les poules mises à jour après chaque match"],
-  ["/equipes", "Équipes", "Les clubs engagés et leurs fiches"],
+  ["/equipes", "Clubs", "Actualités, joueurs et matchs de chaque club"],
   ["/billetterie", "Billetterie", "Catégories, prix et réservation"],
   ["/infos", "Infos pratiques", "Lieu, itinéraire, horaires et alertes WhatsApp"],
   ["/inscription-club", "Présidents de club", "Inscrire son club, ses joueurs et leurs licences"],
@@ -26,7 +27,7 @@ const RUBRIQUES = [
 ] as const;
 
 export default async function Accueil() {
-  const [tournoi, clubsListe, matchs, publications, alertes] = await Promise.all([getTournoi(), getClubs(), getMatchs(), getPublications(), getAlertes(3)]);
+  const [tournoi, clubsListe, matchs, publications, alertes, actualitesClubs] = await Promise.all([getTournoi(), getClubs(), getMatchs(), getPublications(), getAlertes(3), getActualitesClubs(6)]);
   // Bandeau d'annonces : seulement celles des 4 derniers jours.
   const recentes = alertes.filter((a) => Date.now() - new Date(a.publiee_le).getTime() < 4 * 86_400_000);
   const clubs = parId(clubsListe);
@@ -186,6 +187,25 @@ export default async function Accueil() {
           )}
         </div>
       </section>
+
+      {actualitesClubs.length > 0 && (
+        <section className="band">
+          <div className="wrap">
+            <div className="head">
+              <div>
+                <div className="eyebrow">Espace des clubs</div>
+                <h2>Ça se passe dans les clubs</h2>
+              </div>
+              <Link className="btn line sm" href="/equipes">Tous les clubs</Link>
+            </div>
+            <div className="grid g3">
+              {actualitesClubs.map((a) => (
+                <CarteActualite key={a.id} actu={a} club={clubs.get(a.club_id)} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="band">
         <div className="wrap">

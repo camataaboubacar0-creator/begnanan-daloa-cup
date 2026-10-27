@@ -9,7 +9,7 @@ const LIENS = [
   ["/matchs", "Matchs"],
   ["/medias", "Médias"],
   ["/classements", "Classements"],
-  ["/equipes", "Équipes"],
+  ["/equipes", "Clubs"],
   ["/billetterie", "Billetterie"],
   ["/infos", "Infos"],
 ] as const;

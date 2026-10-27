@@ -1,6 +1,6 @@
 import "server-only";
 import { createPublicClient, supabaseConfigured } from "./supabase/server";
-import type { Alerte, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, TirAuBut, Tournoi } from "./types";
+import type { ActualiteClub, Alerte, CommentaireClub, JoueurPublic, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, TirAuBut, Tournoi } from "./types";
 
 const TOURNOI_PAR_DEFAUT: Tournoi = {
   nom: "BÊGNANAN DALOA CUP",
@@ -23,7 +23,7 @@ async function lire<T>(requete: (db: ReturnType<typeof createPublicClient>) => P
   const { data, error } = await requete(db);
   if (error) {
     // Table pas encore créée (migration en attente) : la fonction correspondante reste vide.
-    if (["PGRST205", "42P01"].includes((error as { code?: string }).code ?? "")) return vide;
+    if (["PGRST205", "PGRST202", "42P01"].includes((error as { code?: string }).code ?? "")) return vide;
     console.error(error);
     throw new Error("Base de données indisponible");
   }
@@ -83,3 +83,23 @@ export const getTirsAuBut = (matchId: string) =>
 
 /** Buteurs et cartons du tournoi (vue « buteurs »). */
 export const getButeurs = () => lire<Buteur[]>((db) => db.from("buteurs").select("*"), []);
+
+/** Joueurs à licence active d'un club (sans date de naissance ni numéro de licence). */
+export const getEffectif = (clubId: string) =>
+  lire<JoueurPublic[]>((db) => db.rpc("effectif_public", { p_club: clubId }), []);
+
+/** Actualités des clubs, les plus récentes d'abord (toutes, ou celles d'un club). */
+export const getActualitesClubs = (nombre = 30, clubId?: string) =>
+  lire<ActualiteClub[]>((db) => {
+    const q = db.from("actualites_club").select("*").eq("masquee", false).order("cree_le", { ascending: false }).limit(nombre);
+    return clubId ? q.eq("club_id", clubId) : q;
+  }, []);
+
+export const getActualiteClub = (id: string) =>
+  lire<ActualiteClub | null>((db) => db.from("actualites_club").select("*").eq("id", id).eq("masquee", false).maybeSingle(), null);
+
+export const getCommentairesClub = (actualiteId: string) =>
+  lire<CommentaireClub[]>(
+    (db) => db.from("commentaires_club").select("id, actualite_id, auteur, texte, masque, cree_le").eq("actualite_id", actualiteId).eq("masque", false).order("cree_le").limit(300),
+    [],
+  );
