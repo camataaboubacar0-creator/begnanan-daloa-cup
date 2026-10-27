@@ -39,6 +39,7 @@ export default async function EspaceAdmin({ children }: { children: React.ReactN
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Link className="btn ghost sm" href="/">Voir le site</Link>
+            {peutVoir(orga.role, "club") && <Link className="btn ghost sm" href="/espace-club/connexion">Espace club</Link>}
             <form action={seDeconnecter}><button className="btn ghost sm">Se déconnecter</button></form>
           </div>
         </div>

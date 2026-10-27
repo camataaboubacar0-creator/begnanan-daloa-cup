@@ -89,13 +89,13 @@ export default async function MonClub() {
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 560 }}>
+      {!orga.consultation && <div className="card" style={{ maxWidth: 560 }}>
         <h3 style={{ marginBottom: 12 }}>Mon mot de passe</h3>
         <Formulaire action={changerMotDePasse} bouton="Changer le mot de passe">
           <label className="field">Nouveau mot de passe<input name="motdepasse" type="password" minLength={8} required autoComplete="new-password" /></label>
           <label className="field">Confirmation<input name="confirmation" type="password" minLength={8} required autoComplete="new-password" /></label>
         </Formulaire>
-      </div>
+      </div>}
     </>
   );
 }

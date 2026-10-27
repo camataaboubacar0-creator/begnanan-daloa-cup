@@ -1,4 +1,5 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient, supabaseConfigured } from "./supabase/server";
@@ -9,9 +10,14 @@ export interface Organisateur {
   email: string;
   nom: string;
   role: Role;
-  /** Club du président (rôle « president » uniquement). */
+  /** Club du président, ou club que consulte un membre du comité dans l'espace club. */
   club_id?: string;
+  /** Membre du comité qui consulte l'espace d'un club (et non le président lui-même). */
+  consultation?: boolean;
 }
+
+/** Cookie du club que consulte un membre du comité dans l'espace club. */
+export const COOKIE_CLUB_CONSULTE = "club_consulte";
 
 /**
  * Organisateur ou président de club connecté et actif, ou null.
@@ -33,13 +39,21 @@ export const getOrganisateur = cache(async (): Promise<Organisateur | null> => {
 export const peutVoir = (role: Role, page: string) => ROLES[role].pages.includes(page);
 
 /**
- * Espace club : réservé aux présidents de club. Un organisateur connecté arrive sur la page de
- * connexion de l'espace club, qui lui explique la différence au lieu de l'envoyer à l'espace pro.
+ * Espace club : celui du président connecté. Un membre du comité (ou l'administrateur) peut aussi
+ * ouvrir l'espace d'un club, choisi sur la page de connexion de l'espace club ; les autres comptes
+ * de l'organisation y voient un message qui les renvoie à l'espace pro.
  */
 export async function exigerClub() {
   const orga = await getOrganisateur();
-  if (!orga || orga.role !== "president" || !orga.club_id) redirect("/espace-club/connexion");
-  return orga as Organisateur & { club_id: string };
+  if (orga?.role === "president" && orga.club_id) return orga as Organisateur & { club_id: string };
+  if (orga && peutVoir(orga.role, "club")) {
+    const club = (await cookies()).get(COOKIE_CLUB_CONSULTE)?.value;
+    if (club) {
+      const { data } = await (await createClient()).from("clubs").select("id").eq("id", club).maybeSingle();
+      if (data) return { ...orga, club_id: data.id, consultation: true };
+    }
+  }
+  redirect("/espace-club/connexion");
 }
 
 /** À appeler en tête de chaque page et action d'administration. */

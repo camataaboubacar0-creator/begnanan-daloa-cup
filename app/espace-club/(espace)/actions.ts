@@ -178,7 +178,8 @@ export async function envoyerMessage(_: Etat, f: FormData): Promise<Etat> {
 }
 
 export async function changerMotDePasse(_: Etat, f: FormData): Promise<Etat> {
-  await exigerClub();
+  // Un membre du comité qui consulte l'espace ne change pas ici le mot de passe de son propre compte.
+  if ((await exigerClub()).consultation) return { erreur: "Seul le président peut changer ce mot de passe." };
   const mdp = texte(f, "motdepasse");
   if (mdp.length < 8) return { erreur: "8 caractères minimum." };
   if (mdp !== texte(f, "confirmation")) return { erreur: "Les deux mots de passe ne correspondent pas." };

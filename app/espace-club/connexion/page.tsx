@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Formulaire } from "@/app/admin/connexion/Formulaire";
 import { quitterEspaceClub } from "@/app/admin/connexion/actions";
-import { getOrganisateur } from "@/lib/auth";
+import { getOrganisateur, peutVoir } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { consulterClub } from "./actions";
 
 export const metadata: Metadata = { title: "Connexion espace club", robots: { index: false } };
 
@@ -12,7 +14,37 @@ export default async function ConnexionClub({ searchParams }: { searchParams: Pr
   const orga = await getOrganisateur();
   if (orga?.role === "president" && orga.club_id) redirect("/espace-club");
 
-  // Compte de l'organisation : l'espace club n'est pas le sien.
+  // Comité et administrateur : ils choisissent le club dont ils ouvrent l'espace.
+  if (orga && peutVoir(orga.role, "club")) {
+    const { data } = await (await createClient()).from("clubs").select("id, nom, poule").order("nom");
+    const clubs = data ?? [];
+    return (
+      <section className="band">
+        <div className="wrap" style={{ maxWidth: 560 }}>
+          <div className="card">
+            <div className="eyebrow">Espace club · membres du comité</div>
+            <h1 className="h2" style={{ margin: "6px 0 12px" }}>Ouvrir l&apos;espace d&apos;un club</h1>
+            <p className="small" style={{ marginBottom: 14 }}>
+              Vous voyez l&apos;espace comme son président : joueurs, encadrement, messages et cartes. Vos messages y sont signés par le comité.
+            </p>
+            {!clubs.length && <p className="small">Aucun club inscrit pour l&apos;instant.</p>}
+            <div className="adm-list">
+              {clubs.map((c) => (
+                <form key={c.id} action={consulterClub} className="adm-item choix-club">
+                  <input type="hidden" name="club_id" value={c.id} />
+                  <span><b>{c.nom}</b>{c.poule && <span className="small"> · Poule {c.poule}</span>}</span>
+                  <button className="btn line sm">Ouvrir</button>
+                </form>
+              ))}
+            </div>
+            <Link className="btn ghost sm" style={{ marginTop: 14 }} href="/admin">← Retour à l&apos;Espace pro</Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Autres comptes de l'organisation (billetterie, médias) : l'espace club n'est pas le leur.
   if (orga) {
     return (
       <section className="band">
