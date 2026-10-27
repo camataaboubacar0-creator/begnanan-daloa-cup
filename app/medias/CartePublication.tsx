@@ -29,6 +29,8 @@ export function CartePublication({ pub, clubs, matchs }: { pub: Publication; clu
   if (pub.type === "hdm") {
     return (
       <Link className="card hdm reveal" href={lien}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {pub.image_url && <img className="hdm-image" src={pub.image_url} alt="" loading="lazy" />}
         <div className="hdm-badge">★</div>
         <span className="eyebrow">Homme du match · {datePub(pub)}</span>
         <h3>{pub.joueur}</h3>
@@ -45,7 +47,13 @@ export function CartePublication({ pub, clubs, matchs }: { pub: Publication; clu
   const ext = match ? clubs.get(match.club_exterieur) : undefined;
   return (
     <Link className="card news reveal" href={lien}>
-      {match ? (
+      {pub.image_url ? (
+        <div className="thumb thumb-image">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={pub.image_url} alt="" loading="lazy" />
+          {pub.video_url && <Lecture />}
+        </div>
+      ) : match ? (
         <div className="thumb" style={{ "--c1": dom?.couleur, "--c2": ext?.couleur } as React.CSSProperties}>
           <Crest club={dom} />
           <span className="thumb-s mono">

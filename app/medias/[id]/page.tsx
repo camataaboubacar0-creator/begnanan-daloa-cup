@@ -28,12 +28,19 @@ export default async function Publication({ params }: { params: Promise<{ id: st
         </div>
         <h1 className="h2" style={{ margin: "6px 0 16px" }}>{titre}</h1>
         {pub.type === "hdm" && pub.club_id && <p className="small" style={{ marginBottom: 12 }}>{clubs.get(pub.club_id)?.nom}</p>}
+        {pub.image_url && !integrable && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="pub-image" src={pub.image_url} alt={titre} />
+        )}
         {integrable ? (
           <iframe className="vid" src={integrable} title={titre} allow="encrypted-media; picture-in-picture" allowFullScreen style={{ width: "100%", aspectRatio: "16/9", border: 0 }} />
         ) : (
           pub.video_url && <a className="btn primary" href={pub.video_url} target="_blank" rel="noopener">Voir la vidéo</a>
         )}
         <p style={{ whiteSpace: "pre-line", margin: "18px 0" }}>{pub.texte}</p>
+        {pub.lien_url && (
+          <a className="btn primary" style={{ marginBottom: 18 }} href={pub.lien_url} target="_blank" rel="noopener">Voir la publication complète</a>
+        )}
         {match && <MatchCard match={match} clubs={clubs} />}
         <a className="btn line sm" style={{ marginTop: 18 }} href={lienWhatsApp(`${titre} · BÊGNANAN DALOA CUP`)} target="_blank" rel="noopener">
           Partager sur WhatsApp
