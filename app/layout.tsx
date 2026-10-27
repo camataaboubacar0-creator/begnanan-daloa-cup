@@ -3,6 +3,7 @@ import { Apparitions } from "@/components/Apparitions";
 import { Analytics } from "@vercel/analytics/next";
 import { Header, TabBar } from "@/components/Navigation";
 import { EnregistrementHorsLigne } from "@/components/HorsLigne";
+import { PiedPartenaires } from "@/components/Partenaires";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main>{children}</main>
         <footer>
+          <PiedPartenaires />
           <div className="wrap">
             <div>
               <b style={{ fontFamily: "var(--f-display)", fontSize: "1.3rem", letterSpacing: ".03em" }}>BÊGNANAN DALOA CUP</b>

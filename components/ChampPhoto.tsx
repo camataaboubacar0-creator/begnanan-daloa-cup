@@ -6,7 +6,7 @@ import { useState } from "react";
 const COTE_MAX = 480;
 
 /** Réduit une photo de téléphone (souvent 3 à 5 Mo) à quelques dizaines de Ko avant l'envoi. */
-async function reduire(fichier: File, cote = COTE_MAX): Promise<File> {
+async function reduire(fichier: File, cote = COTE_MAX, transparence = false): Promise<File> {
   const image = await createImageBitmap(fichier).catch(() => null);
   if (!image) return fichier;
   const echelle = Math.min(1, cote / Math.max(image.width, image.height));
@@ -14,12 +14,15 @@ async function reduire(fichier: File, cote = COTE_MAX): Promise<File> {
   canvas.width = Math.round(image.width * echelle);
   canvas.height = Math.round(image.height * echelle);
   canvas.getContext("2d")!.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/jpeg", 0.8));
-  return blob ? new File([blob], fichier.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : fichier;
+  // Logos : un PNG garde son fond transparent (en JPEG, il deviendrait noir).
+  const png = transparence && fichier.type !== "image/jpeg";
+  const type = png ? "image/png" : "image/jpeg";
+  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, type, 0.8));
+  return blob ? new File([blob], fichier.name.replace(/\.\w+$/, "") + (png ? ".png" : ".jpg"), { type }) : fichier;
 }
 
 /** Champ photo avec aperçu : la photo est réduite sur le téléphone avant d'être envoyée. */
-export function ChampPhoto({ name, label, actuelle, requis, cote }: { name: string; label: string; actuelle?: string | null; requis?: boolean; cote?: number }) {
+export function ChampPhoto({ name, label, actuelle, requis, cote, transparence }: { name: string; label: string; actuelle?: string | null; requis?: boolean; cote?: number; transparence?: boolean }) {
   const [apercu, setApercu] = useState<string | null>(actuelle ?? null);
   const [traitement, setTraitement] = useState(false);
   return (
@@ -42,7 +45,7 @@ export function ChampPhoto({ name, label, actuelle, requis, cote }: { name: stri
             const f = input.files?.[0];
             if (!f) return setApercu(actuelle ?? null);
             setTraitement(true);
-            const petit = await reduire(f, cote);
+            const petit = await reduire(f, cote, transparence);
             try {
               const dt = new DataTransfer();
               dt.items.add(petit);

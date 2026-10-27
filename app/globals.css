@@ -736,3 +736,17 @@ a.fil-lien{display:block;color:inherit;text-decoration:none}
 .commentaire.masque{opacity:.55}
 .pot-de-miel{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .supporters{margin-bottom:16px}
+
+/* Partenaires (sponsors) : logos sur fond clair pour rester lisibles en thème sombre */
+.partenaires{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px}
+.partenaires.principaux{margin-bottom:18px}
+.partenaire{display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;transition:transform .2s,box-shadow .2s}
+a.partenaire:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.partenaire img{display:block;object-fit:contain;width:auto;height:56px;max-width:160px}
+.partenaire.principal img{height:96px;max-width:280px}
+.partenaire.soutien img{height:40px;max-width:120px}
+.pied-partenaires{display:grid!important;justify-items:center;gap:10px;margin-bottom:24px;opacity:1!important}
+.pied-partenaires .partenaire{padding:6px 10px;border:0}
+.pied-partenaires .partenaire img{height:34px;max-width:110px}
+.partenaire-ligne{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.partenaire-ligne img{height:32px;max-width:80px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}

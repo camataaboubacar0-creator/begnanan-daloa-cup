@@ -151,10 +151,10 @@ export interface LigneClassement {
 
 export const ROLES: Record<Role, { label: string; pages: string[] }> = {
   // « club » : le comité peut aussi ouvrir l'espace club de n'importe quel club.
-  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes", "club"] },
-  comite: { label: "Comité", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "club"] },
+  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "partenaires", "comptes", "club"] },
+  comite: { label: "Comité", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "partenaires", "club"] },
   billetterie: { label: "Billetterie", pages: ["billets"] },
-  medias: { label: "Médias", pages: ["medias"] },
+  medias: { label: "Médias", pages: ["medias", "partenaires"] },
   president: { label: "Président de club", pages: ["club", "mercato", "cartes", "messages"] },
 };
 
@@ -303,4 +303,16 @@ export interface JoueurPublic {
   poste: string | null;
   numero_maillot: number | null;
   photo_url: string | null;
+}
+
+/** Partenaire (sponsor) du tournoi, affiché avec son logo sur le site. */
+export interface Partenaire {
+  id: string;
+  nom: string;
+  logo_url: string;
+  lien_url: string | null;
+  /** « principal » : logo en grand en tête de la section ; « officiel » : grille ; « soutien » : petits logos. */
+  niveau: "principal" | "officiel" | "soutien";
+  ordre: number;
+  visible: boolean;
 }

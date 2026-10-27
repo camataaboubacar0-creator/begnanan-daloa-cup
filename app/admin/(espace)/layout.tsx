@@ -21,6 +21,7 @@ const PAGES = [
   ["messages", "Messages"],
   ["billets", "Billetterie"],
   ["medias", "Médias"],
+  ["partenaires", "Partenaires"],
   ["comptes", "Comptes"],
 ] as const;
 
