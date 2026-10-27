@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { OngletsAdmin } from "@/app/admin/(espace)/OngletsAdmin";
 import { quitterEspaceClub } from "@/app/admin/connexion/actions";
+import { changerDeClub } from "../connexion/actions";
 import { exigerClub } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,17 +32,29 @@ export default async function EspaceClub({ children }: { children: React.ReactNo
             {club?.logo_url && <img className="logo-club" src={club.logo_url} alt="" />}
             <div>
               <div className="eyebrow" style={{ color: "var(--gold)" }}>Espace club · {club?.nom}</div>
-              <h2>Bonjour {orga.nom}</h2>
+              <h2>{orga.consultation ? `Espace de ${club?.nom ?? "ce club"}` : `Bonjour ${orga.nom}`}</h2>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Link className="btn ghost sm" href="/">Voir le site</Link>
-            <form action={quitterEspaceClub}><button className="btn ghost sm">Se déconnecter</button></form>
+            {orga.consultation ? (
+              <>
+                <form action={changerDeClub}><button className="btn ghost sm">Changer de club</button></form>
+                <Link className="btn ghost sm" href="/admin">Espace pro</Link>
+              </>
+            ) : (
+              <>
+                <Link className="btn ghost sm" href="/">Voir le site</Link>
+                <form action={quitterEspaceClub}><button className="btn ghost sm">Se déconnecter</button></form>
+              </>
+            )}
           </div>
         </div>
       </section>
       <section className="band">
         <div className="wrap adm-layout">
+          {orga.consultation && (
+            <p className="consultation">Vous consultez cet espace en tant que membre du comité ({orga.nom}). Ce que vous enregistrez ici est fait au nom du comité.</p>
+          )}
           <OngletsAdmin onglets={onglets} label="Espace club" />
           {children}
         </div>

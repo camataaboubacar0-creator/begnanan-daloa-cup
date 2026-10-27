@@ -119,6 +119,9 @@ export interface Publication {
   joueur: string | null;
   club_id: string | null;
   video_url: string | null;
+  /** Image d'aperçu et lien vers la publication complète (réseaux sociaux). */
+  image_url?: string | null;
+  lien_url?: string | null;
   publiee: boolean;
   publiee_le: string | null;
   cree_le: string;
@@ -147,8 +150,9 @@ export interface LigneClassement {
 }
 
 export const ROLES: Record<Role, { label: string; pages: string[] }> = {
-  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes"] },
-  comite: { label: "Comité", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages"] },
+  // « club » : le comité peut aussi ouvrir l'espace club de n'importe quel club.
+  admin: { label: "Administrateur", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "billets", "medias", "comptes", "club"] },
+  comite: { label: "Comité", pages: ["tournoi", "matchs", "direct", "tirage", "annonces", "licences", "mercato", "cartes", "messages", "club"] },
   billetterie: { label: "Billetterie", pages: ["billets"] },
   medias: { label: "Médias", pages: ["medias"] },
   president: { label: "Président de club", pages: ["club", "mercato", "cartes", "messages"] },
