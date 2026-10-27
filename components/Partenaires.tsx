@@ -1,10 +1,15 @@
 import { getPartenaires } from "@/lib/data";
 import type { Partenaire } from "@/lib/types";
 
-/** Logo cliquable s'il y a un lien vers le site du partenaire. */
+/** Logo et nom, cliquables s'il y a un lien vers le site du partenaire. */
 function Logo({ p }: { p: Partenaire }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  const img = <img src={p.logo_url} alt={p.nom} title={p.nom} loading="lazy" />;
+  const img = (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={p.logo_url} alt="" loading="lazy" />
+      <span className="partenaire-nom">{p.nom}</span>
+    </>
+  );
   return p.lien_url ? (
     <a className={`partenaire ${p.niveau}`} href={p.lien_url} target="_blank" rel="noopener sponsored">{img}</a>
   ) : (
