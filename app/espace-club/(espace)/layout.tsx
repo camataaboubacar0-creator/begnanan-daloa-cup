@@ -18,6 +18,7 @@ export default async function EspaceClub({ children }: { children: React.ReactNo
   ]);
   const onglets = [
     ["/espace-club", "Mon club"],
+    ["/espace-club/actualites", "Actualités"],
     ["/espace-club/joueurs", "Joueurs"],
     ["/espace-club/encadrement", "Encadrement"],
     ["/espace-club/mercato", "Mercato"],
@@ -43,7 +44,7 @@ export default async function EspaceClub({ children }: { children: React.ReactNo
               </>
             ) : (
               <>
-                <Link className="btn ghost sm" href="/">Voir le site</Link>
+                <Link className="btn ghost sm" href={`/equipes/${orga.club_id}`}>Page publique du club</Link>
                 <form action={quitterEspaceClub}><button className="btn ghost sm">Se déconnecter</button></form>
               </>
             )}

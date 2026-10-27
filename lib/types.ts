@@ -273,3 +273,34 @@ export interface Alerte {
   publiee_le: string;
   envoyee_le: string | null;
 }
+
+/** Actualité publiée par un club sur sa page publique. */
+export interface ActualiteClub {
+  id: string;
+  club_id: string;
+  texte: string;
+  image_url: string | null;
+  masquee: boolean;
+  nb_commentaires: number;
+  nb_jaime: number;
+  cree_le: string;
+}
+
+export interface CommentaireClub {
+  id: string;
+  actualite_id: string;
+  auteur: string;
+  texte: string;
+  masque: boolean;
+  cree_le: string;
+}
+
+/** Joueur tel qu'il apparaît sur la page publique du club (licence active). */
+export interface JoueurPublic {
+  id: string;
+  nom: string;
+  prenoms: string;
+  poste: string | null;
+  numero_maillot: number | null;
+  photo_url: string | null;
+}

@@ -69,6 +69,11 @@ export default async function ConnexionClub({ searchParams }: { searchParams: Pr
   return (
     <section className="band">
       <div className="wrap" style={{ maxWidth: 420 }}>
+        <div className="card supporters">
+          <div className="eyebrow">Supporters et visiteurs</div>
+          <p style={{ margin: "6px 0 10px" }}>Parcourez les clubs : leurs actualités, leurs joueurs et leurs matchs. Aucun compte n&apos;est nécessaire.</p>
+          <Link className="btn primary sm" href="/equipes">Voir les clubs</Link>
+        </div>
         <div className="card">
           <div className="eyebrow">Espace club · présidents de club</div>
           <h1 className="h2" style={{ margin: "6px 0 18px" }}>Connexion</h1>
