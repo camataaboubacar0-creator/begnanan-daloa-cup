@@ -5,6 +5,7 @@ import { Countdown } from "@/components/Countdown";
 import { CarteActualite } from "@/components/CarteActualite";
 import { Crest } from "@/components/Crest";
 import { MatchCard } from "@/components/MatchCard";
+import { SectionPartenaires } from "@/components/Partenaires";
 import { Hero3D } from "@/components/logo3d/Hero3D";
 import { getActualitesClubs, getAlertes, getClubs, getMatchs, getPublications, getTournoi, parId } from "@/lib/data";
 import { SITE } from "@/lib/site";
@@ -206,6 +207,8 @@ export default async function Accueil() {
           </div>
         </section>
       )}
+
+      <SectionPartenaires />
 
       <section className="band">
         <div className="wrap">

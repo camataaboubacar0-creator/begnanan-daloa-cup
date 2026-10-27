@@ -1,6 +1,6 @@
 import "server-only";
 import { createPublicClient, supabaseConfigured } from "./supabase/server";
-import type { ActualiteClub, Alerte, CommentaireClub, JoueurPublic, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, TirAuBut, Tournoi } from "./types";
+import type { ActualiteClub, Alerte, CommentaireClub, JoueurPublic, Partenaire, Buteur, CategorieBillet, EvenementMatch, Club, LigneClassement, Match, Photo, Publication, TirAuBut, Tournoi } from "./types";
 
 const TOURNOI_PAR_DEFAUT: Tournoi = {
   nom: "BÊGNANAN DALOA CUP",
@@ -103,3 +103,10 @@ export const getCommentairesClub = (actualiteId: string) =>
     (db) => db.from("commentaires_club").select("id, actualite_id, auteur, texte, masque, cree_le").eq("actualite_id", actualiteId).eq("masque", false).order("cree_le").limit(300),
     [],
   );
+
+/** Partenaires affichés sur le site : principaux d'abord, puis dans l'ordre choisi. */
+export const getPartenaires = async () => {
+  const liste = await lire<Partenaire[]>((db) => db.from("partenaires").select("*").eq("visible", true).order("ordre").order("nom"), []);
+  const rang = { principal: 0, officiel: 1, soutien: 2 };
+  return liste.sort((a, b) => rang[a.niveau] - rang[b.niveau]);
+};
