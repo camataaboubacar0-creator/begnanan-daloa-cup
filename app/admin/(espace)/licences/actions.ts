@@ -27,12 +27,28 @@ export async function accepterDemande(_: Etat, f: FormData): Promise<Etat> {
   const d = data as DemandeClub | null;
   if (!d) return { erreur: "Demande introuvable ou déjà traitée." };
 
-  const { data: club, error: e1 } = await admin
-    .from("clubs")
-    .insert({ nom: d.nom_club, sigle: sigleDe(d.nom_club), quartier: d.quartier, logo_url: d.logo_url ?? null })
-    .select("id")
-    .single();
+  // Club déjà inscrit par le comité (équipes officielles) et sans président : la demande s'y rattache.
+  const { data: existant } = await admin.from("clubs").select("id, quartier, logo_url").ilike("nom", d.nom_club.trim()).maybeSingle();
+  if (existant) {
+    const { count } = await admin.from("presidents").select("user_id", { count: "exact", head: true }).eq("club_id", existant.id);
+    if (count) return { erreur: "Ce club a déjà un président : vérifiez la demande ou renommez le club dans « Clubs et matchs »." };
+    await admin
+      .from("clubs")
+      .update({ ...(!existant.quartier && d.quartier ? { quartier: d.quartier } : {}), ...(!existant.logo_url && d.logo_url ? { logo_url: d.logo_url } : {}) })
+      .eq("id", existant.id);
+  }
+  const { data: club, error: e1 } = existant
+    ? { data: { id: existant.id }, error: null }
+    : await admin
+        .from("clubs")
+        .insert({ nom: d.nom_club, sigle: sigleDe(d.nom_club), quartier: d.quartier, logo_url: d.logo_url ?? null })
+        .select("id")
+        .single();
   if (e1 || !club) return { erreur: e1?.code === "23505" ? "Un club porte déjà ce nom : renommez-le d'abord dans « Clubs et matchs »." : "Création du club impossible." };
+  // En cas d'échec, on ne retire que le club créé ici, jamais un club officiel existant.
+  const retirerClub = async () => {
+    if (!existant) await admin.from("clubs").delete().eq("id", club.id);
+  };
 
   let userId = d.user_id ?? null;
   let mdp: string | null = null;
@@ -40,7 +56,7 @@ export async function accepterDemande(_: Etat, f: FormData): Promise<Etat> {
     mdp = motDePasseProvisoire();
     const { data: u, error: e2 } = await admin.auth.admin.createUser({ email: d.email, password: mdp, email_confirm: true });
     if (e2 || !u.user) {
-      await admin.from("clubs").delete().eq("id", club.id);
+      await retirerClub();
       return { erreur: e2?.message.includes("already") ? "Un compte existe déjà avec cet e-mail." : "Création du compte impossible." };
     }
     userId = u.user.id;
@@ -49,7 +65,7 @@ export async function accepterDemande(_: Etat, f: FormData): Promise<Etat> {
   const { error: e3 } = await admin.from("presidents").insert({ user_id: userId, club_id: club.id, nom: nomComplet });
   if (e3) {
     if (mdp) await admin.auth.admin.deleteUser(userId);
-    await admin.from("clubs").delete().eq("id", club.id);
+    await retirerClub();
     return { erreur: "Création du compte impossible." };
   }
   await admin.from("demandes_club").update({ statut: "acceptée", club_id: club.id, traitee_le: new Date().toISOString() }).eq("id", d.id);
