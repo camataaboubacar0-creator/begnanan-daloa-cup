@@ -28,6 +28,24 @@ export async function supprimerClub(_: Etat, f: FormData): Promise<Etat> {
   return r.erreur ? { erreur: "Impossible : ce club a déjà des matchs ou des publications." } : r;
 }
 
+/**
+ * Retire d'un coup tous les clubs qui n'ont encore ni match ni président (liste à refaire, tests).
+ * Les clubs déjà engagés restent : il faut d'abord retirer leurs matchs.
+ */
+export async function supprimerTousLesClubs(): Promise<Etat> {
+  return ecrire("matchs", async (db) => {
+    const [{ data: clubs, error }, { data: matchs }, { data: presidents }] = await Promise.all([
+      db.from("clubs").select("id"),
+      db.from("matchs").select("club_domicile, club_exterieur"),
+      db.from("presidents").select("club_id"),
+    ]);
+    if (error) return { error };
+    const engages = new Set([...(matchs ?? []).flatMap((m) => [m.club_domicile, m.club_exterieur]), ...(presidents ?? []).map((p) => p.club_id)]);
+    const libres = (clubs ?? []).map((c) => c.id).filter((id) => !engages.has(id));
+    return libres.length ? db.from("clubs").delete().in("id", libres) : { error: null };
+  }, "Clubs retirés (ceux qui ont des matchs ou un président sont gardés).");
+}
+
 // Daloa est à l'heure UTC toute l'année : la saisie locale vaut l'heure UTC.
 const dateHeure = (f: FormData) => `${texte(f, "date_heure")}:00Z`;
 

@@ -2,7 +2,7 @@ import { Formulaire } from "@/components/admin/Formulaire";
 import { exigerAcces } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Club, Match } from "@/lib/types";
-import { ajouterClub, ajouterMatch, modifierClub, modifierMatch, supprimerClub, supprimerMatch } from "./actions";
+import { ajouterClub, ajouterMatch, modifierClub, modifierMatch, supprimerClub, supprimerMatch, supprimerTousLesClubs } from "./actions";
 
 const POULES = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const STATUTS = ["programmé", "en cours", "terminé", "reporté", "interrompu", "annulé"];
@@ -124,6 +124,11 @@ export default async function AdminMatchs() {
             </details>
           ))}
         </div>
+        {listeClubs.length > 1 && (
+          <Formulaire action={supprimerTousLesClubs} className="form-del" bouton="Supprimer tous les clubs" confirmer="Supprimer tous les clubs du site ? Ceux qui ont déjà des matchs ou un président sont gardés.">
+            <span className="small">Retire d&apos;un coup les clubs qui n&apos;ont encore ni match ni président.</span>
+          </Formulaire>
+        )}
       </div>
     </>
   );
