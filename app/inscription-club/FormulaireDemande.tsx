@@ -31,7 +31,7 @@ function Encadrant({ cle, titre }: { cle: "coach" | "adjoint"; titre: string }) 
   );
 }
 
-export function FormulaireDemande() {
+export function FormulaireDemande({ clubs = [] }: { clubs?: string[] }) {
   const [etat, action, envoi] = useActionState<EtatDemande, FormData>(deposerDemande, {});
   // Clés stables des lignes de joueurs (ajout et retrait sans perdre la saisie des autres).
   const [joueurs, setJoueurs] = useState<number[]>([]);
@@ -62,7 +62,12 @@ export function FormulaireDemande() {
       <fieldset className="bloc-form">
         <legend>1. Le club</legend>
         <div className="form-grid">
-          <label className="field">Nom du club<input name="nom_club" required minLength={2} maxLength={60} /></label>
+          <label className="field">
+            Nom du club
+            <input name="nom_club" required minLength={2} maxLength={60} list="clubs-officiels" autoComplete="off" />
+            {clubs.length > 0 && <span className="small">Choisissez votre club dans la liste des équipes officielles.</span>}
+          </label>
+          <datalist id="clubs-officiels">{clubs.map((n) => <option key={n} value={n} />)}</datalist>
           <label className="field">Quartier<input name="quartier" maxLength={60} /></label>
           <ChampPhoto name="logo" label="Logo du club (facultatif)" />
         </div>

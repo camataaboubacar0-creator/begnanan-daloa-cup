@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTournoi } from "@/lib/data";
+import { getClubs, getTournoi } from "@/lib/data";
 import { FormulaireDemande } from "./FormulaireDemande";
 
 export const revalidate = 300;
 export const metadata: Metadata = { title: "Inscrire mon club" };
 
 export default async function InscriptionClub() {
-  const tournoi = await getTournoi();
+  const [tournoi, clubs] = await Promise.all([getTournoi(), getClubs()]);
   const incluses = tournoi.licences_incluses ?? 10;
   return (
     <section className="band">
@@ -21,7 +21,7 @@ export default async function InscriptionClub() {
         </div>
         <div className="grid inscription-grille">
           <div className="card">
-            <FormulaireDemande />
+            <FormulaireDemande clubs={clubs.map((c) => c.nom).sort((a, b) => a.localeCompare(b, "fr"))} />
           </div>
           <div className="card">
             <h3 style={{ marginBottom: 10 }}>Comment ça marche</h3>
