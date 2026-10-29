@@ -592,6 +592,10 @@ nav.rubriques a.on{background:var(--gold);color:#1a1405;opacity:1}
 .verso-qr{display:block;width:31cqw;height:31cqw;background:#fff;border-radius:1.5cqw;border:.3cqw solid #d9e2db}
 .verso-qr svg{width:100%;height:100%;display:block}
 .verso-pied{font-size:2.4cqw;text-align:center;opacity:.6;padding:0 3cqw 2cqw}
+/* Aperçu des présidents : pas de QR code, filigrane « non valable », rien à l'impression. */
+.verso-qr.sans-qr{display:grid;place-items:center;text-align:center;padding:2cqw;font-size:2.6cqw;font-weight:700;color:#7a857d;border-style:dashed;background:repeating-linear-gradient(45deg,#f3f5f2 0 2cqw,#fff 2cqw 4cqw)}
+.face-filigrane{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font:900 7cqw/1 var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:rgb(200 30 30 / .5);transform:rotate(-18deg);white-space:nowrap}
+.apercu-impression{display:none}
 @media print{
   @page{size:A4;margin:10mm}
   body{background:#fff!important}
@@ -605,6 +609,8 @@ nav.rubriques a.on{background:var(--gold);color:#1a1405;opacity:1}
   .carte{display:flex;gap:0;justify-content:center;margin-bottom:5mm;break-inside:avoid;page-break-inside:avoid}
   .face{flex:none}
   .face{width:85.6mm;border-radius:0;box-shadow:none;border:.2mm dashed #9aa59d;box-sizing:border-box}
+  .cartes-apercu{display:none!important}
+  .apercu-impression{display:block;font-size:14pt;text-align:center;margin-top:20mm}
 }
 
 /* Tirage : poules modifiables */

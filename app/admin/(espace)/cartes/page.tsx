@@ -8,7 +8,10 @@ import type { Club, Encadrant, Joueur } from "@/lib/types";
 
 const ORDRE = { président: 0, coach: 1, adjoint: 2 };
 
-/** Cartes du club prêtes à imprimer : encadrement puis joueurs, au format carte bancaire. */
+/**
+ * Cartes du club : encadrement puis joueurs, au format carte bancaire. L'organisation les imprime
+ * avec un QR code signé ; le président de club n'en voit qu'un aperçu, sans QR code ni impression.
+ */
 export default async function Cartes({ searchParams }: { searchParams: Promise<{ club?: string }> }) {
   const orga = await exigerAcces("cartes");
   const db = await createClient();
@@ -27,15 +30,22 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
   const staff = ((encadrants ?? []) as Encadrant[]).sort((a, b) => ORDRE[a.fonction] - ORDRE[b.fonction]);
   const js = (joueurs ?? []) as Joueur[];
   const [base, saison] = await Promise.all([adresseDuSite(), getSaison()]);
+  const apercu = orga.role === "president";
 
   return (
     <div className="card">
       <div className="no-print">
-        <h3 style={{ marginBottom: 6 }}>Cartes à imprimer{club ? ` · ${club.nom}` : ""}</h3>
+        <h3 style={{ marginBottom: 6 }}>{apercu ? "Cartes du club" : "Cartes à imprimer"}{club ? ` · ${club.nom}` : ""}</h3>
+        {apercu ? (
+          <p className="small" style={{ marginBottom: 12 }}>
+            Voici l&apos;aperçu des cartes validées par le comité, pour vérifier les noms et les photos. Les cartes officielles, avec leur
+            QR code de vérification, sont imprimées et remises par l&apos;organisation : un aperçu n&apos;est pas valable au stade.</p>
+        ) : (
         <p className="small" style={{ marginBottom: 12 }}>
           Seules les cartes validées par le comité apparaissent. Chaque carte a deux faces : le recto (logo et nom du tournoi) et le verso
           (photo, informations et QR code). À l&apos;impression, 4 cartes par page A4 : imprimez en couleur, à 100 % (sans « ajuster à la page »),
           découpez le long des pointillés extérieurs, pliez sur le trait du milieu (recto et verso dos à dos), puis plastifiez.</p>
+        )}
         <div className="form-row" style={{ marginBottom: 16 }}>
           {orga.role !== "president" && (
             <form className="form-row" method="get">
@@ -47,18 +57,19 @@ export default async function Cartes({ searchParams }: { searchParams: Promise<{
               <button className="btn line sm">Afficher</button>
             </form>
           )}
-          {staff.length + js.length > 0 && <BoutonImprimer libelle={`Imprimer les ${staff.length + js.length} cartes`} fichier={`cartes-${club!.nom.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`} />}
+          {!apercu && staff.length + js.length > 0 && <BoutonImprimer libelle={`Imprimer les ${staff.length + js.length} cartes`} fichier={`cartes-${club!.nom.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`} />}
         </div>
       </div>
       {!club && <p className="small">Aucun club pour l&apos;instant.</p>}
       {club && staff.length + js.length === 0 && (
         <p className="small">Aucune carte validée pour ce club : les cartes apparaissent ici une fois que le comité a validé l&apos;encadrement et les licences.</p>
       )}
-      <div className="cartes-print">
+      {apercu && staff.length + js.length > 0 && <p className="apercu-impression">L&apos;impression des cartes est réservée à l&apos;organisation.</p>}
+      <div className={apercu ? "cartes-print cartes-apercu" : "cartes-print"}>
         {staff.length > 0 && <h3>Encadrement</h3>}
-        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} />)}
+        {staff.map((e) => <CarteEncadrant key={e.id} encadrant={e} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} apercu={apercu} />)}
         {js.length > 0 && <h3>Joueurs</h3>}
-        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} />)}
+        {js.map((j) => <CarteLicence key={j.id} joueur={j} club={club!.nom} logo={club!.logo_url} base={base} saison={saison} apercu={apercu} />)}
       </div>
     </div>
   );

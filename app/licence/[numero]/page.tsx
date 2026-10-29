@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSaison } from "@/lib/data";
+import { sceauValide } from "@/lib/sceau";
 import { createPublicClient, supabaseConfigured } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -9,10 +10,12 @@ export const metadata: Metadata = { title: "Vérification de licence", robots: {
 type Licence = { numero: string; nom: string; prenoms: string; club: string; poste: string | null; active: boolean; photo_url: string | null; logo_url: string | null };
 
 /** Page ouverte en scannant le QR code d'une carte de licence. */
-export default async function VerifierLicence({ params }: { params: Promise<{ numero: string }> }) {
-  const { numero } = await params;
+export default async function VerifierLicence({ params, searchParams }: { params: Promise<{ numero: string }>; searchParams: Promise<{ s?: string }> }) {
+  const [{ numero }, { s }] = await Promise.all([params, searchParams]);
+  // Seul un QR code imprimé par l'organisation porte un sceau valide.
+  const authentique = sceauValide(decodeURIComponent(numero), s);
   let licence: Licence | null = null;
-  if (supabaseConfigured) {
+  if (supabaseConfigured && authentique) {
     const { data } = await createPublicClient().rpc("verifier_carte", { p_numero: decodeURIComponent(numero) });
     licence = (data as Licence[] | null)?.[0] ?? null;
   }
@@ -25,7 +28,13 @@ export default async function VerifierLicence({ params }: { params: Promise<{ nu
         <div className="card verif">
           <img className="verif-logo" src="/logo-small.webp" alt="" />
           <div className="eyebrow">Bêgnanan Daloa Cup · vérification de {encadrement ? "carte" : "licence"}</div>
-          {licence ? (
+          {!authentique ? (
+            <>
+              <div className="etat bad">Carte non authentifiée</div>
+              <p>Ce QR code n&apos;a pas été délivré par l&apos;organisation du tournoi. Seules les cartes imprimées par le comité sont valables :
+                rapprochez-vous de l&apos;organisation.</p>
+            </>
+          ) : licence ? (
             <>
               <div className={`etat ${licence.active ? "ok" : "bad"}`}>
                 {encadrement ? (licence.active ? "Carte valide" : "Carte non valide") : licence.active ? "Licence active" : "Licence non active"}
