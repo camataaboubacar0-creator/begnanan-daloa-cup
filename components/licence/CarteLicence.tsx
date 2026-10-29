@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { sceauCarte } from "@/lib/sceau";
 import { FONCTIONS, type Encadrant, type Joueur } from "@/lib/types";
 
 /**
@@ -6,8 +7,10 @@ import { FONCTIONS, type Encadrant, type Joueur } from "@/lib/types";
  * on plie au milieu pour avoir le recto (tournoi) et le verso (identité et QR code) dos à dos.
  * Le QR code ouvre la page publique de vérification. Sert aux licences des joueurs et aux
  * cartes de l'encadrement (président, coach, adjoint).
+ * En aperçu (espace des présidents), la carte est marquée « non valable » et n'a pas de QR code :
+ * seules les cartes de l'organisation portent un QR code signé, reconnu à la vérification.
  */
-export async function Carte({ numero, nom, prenoms, titre, club, detail, base, photo, logo, saison }: {
+export async function Carte({ numero, nom, prenoms, titre, club, detail, base, photo, logo, saison, apercu }: {
   numero: string;
   nom: string;
   prenoms: string;
@@ -18,13 +21,15 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
   photo?: string | null;
   logo?: string | null;
   saison: number;
+  apercu?: boolean;
 }) {
-  const lien = `${base}/licence/${numero}`;
+  const lien = `${base}/licence/${numero}?s=${sceauCarte(numero)}`;
   // Marge blanche de 2 modules et correction d'erreur élevée : lisible même imprimé petit ou plastifié.
-  const qr = await QRCode.toString(lien, { type: "svg", margin: 2, errorCorrectionLevel: "Q", color: { dark: "#000000", light: "#ffffff" } });
+  const qr = apercu ? "" : await QRCode.toString(lien, { type: "svg", margin: 2, errorCorrectionLevel: "Q", color: { dark: "#000000", light: "#ffffff" } });
+  const filigrane = apercu && <div className="face-filigrane" aria-hidden="true">Aperçu · non valable</div>;
   const initiales = `${prenoms[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
   return (
-    <div className="carte">
+    <div className={`carte${apercu ? " apercu" : ""}`}>
       <div className="face recto">
         <img className="recto-logo" src="/logo.webp" alt="" />
         <div className="recto-nom">Bêgnanan Daloa Cup</div>
@@ -34,6 +39,7 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
           {logo && <img src={logo} alt="" />}
           <span>{club}</span>
         </div>
+        {filigrane}
       </div>
       <div className="face verso">
         <div className="verso-tete">
@@ -52,15 +58,20 @@ export async function Carte({ numero, nom, prenoms, titre, club, detail, base, p
             {detail && <span className="verso-detail">{detail}</span>}
             <span className="verso-numero">{numero}</span>
           </div>
-          <a className="verso-qr" href={lien} aria-label={`Vérifier la carte ${numero}`} dangerouslySetInnerHTML={{ __html: qr }} />
+          {apercu ? (
+            <div className="verso-qr sans-qr">QR code remis par l&apos;organisation</div>
+          ) : (
+            <a className="verso-qr" href={lien} aria-label={`Vérifier la carte ${numero}`} dangerouslySetInnerHTML={{ __html: qr }} />
+          )}
         </div>
-        <div className="verso-pied">Scannez le QR code pour vérifier cette carte</div>
+        <div className="verso-pied">{apercu ? "Aperçu : la carte officielle est imprimée par l'organisation" : "Scannez le QR code pour vérifier cette carte"}</div>
+        {filigrane}
       </div>
     </div>
   );
 }
 
-type Commun = { club: string; logo?: string | null; base: string; saison: number };
+type Commun = { club: string; logo?: string | null; base: string; saison: number; apercu?: boolean };
 
 export function CarteLicence({ joueur, ...commun }: Commun & { joueur: Joueur }) {
   const detail = [joueur.poste, joueur.numero_maillot ? `n° ${joueur.numero_maillot}` : ""].filter(Boolean).join(" · ");
